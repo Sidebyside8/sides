@@ -1,0 +1,15 @@
+node_modules
+.pnp
+dist
+.next
+out
+build
+.env
+.env.local
+.env.*.local
+.turbo
+*.log
+.DS_Store
+.expo
+expo-env.d.ts
+supabase/.temp
