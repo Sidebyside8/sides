@@ -3,8 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { createClient, Session } from '@supabase/supabase-js'
 
 const supabase = createClient(
-  'http://172.16.224.41:54321',
-  'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH'
+  'https://ensuhiadkajoydjjlasm.supabase.co',
+  'sb_publishable_jl1Mg9QtGJsd6DFM8Nt2hg_C2khPz_M'
 )
 
 export default function App() {
