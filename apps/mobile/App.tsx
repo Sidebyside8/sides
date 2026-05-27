@@ -1,29 +1,59 @@
 import { useEffect, useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native'
-import { createClient, Session } from '@supabase/supabase-js'
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { Session } from '@supabase/supabase-js'
+import { supabase } from './src/lib/supabase'
+import LoginScreen from './src/screens/LoginScreen'
+import ProfileSetupScreen from './src/screens/ProfileSetupScreen'
+import DiscoverScreen from './src/screens/DiscoverScreen'
+import HomeScreen from './src/screens/HomeScreen'
 
-const supabase = createClient(
-  'https://ensuhiadkajoydjjlasm.supabase.co',
-  'sb_publishable_jl1Mg9QtGJsd6DFM8Nt2hg_C2khPz_M'
-)
+type Tab = 'discover' | 'home'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [initialized, setInitialized] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [hasProfile, setHasProfile] = useState(false)
+  const [activeTab, setActiveTab] = useState<Tab>('discover')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('getSession result:', session?.user?.id, error?.message)
       setSession(session)
-      setInitialized(true)
+      if (session) checkProfile(session.user.id)
+      else setInitialized(true)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      if (session) checkProfile(session.user.id)
+      else { setHasProfile(false); setInitialized(true) }
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  const checkProfile = async (userId: string) => {
+    try {
+      console.log('checking profile for:', userId)
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle()
+      console.log('profile check result:', data, error?.message)
+      setHasProfile(!!data)
+    } catch (e: any) {
+      console.log('profile check error:', e.message)
+      setError(e.message)
+      setHasProfile(false)
+    }
+    setInitialized(true)
+  }
+
+  if (error) return (
+    <View style={styles.loading}>
+      <Text style={styles.loadingText}>Error: {error}</Text>
+    </View>
+  )
 
   if (!initialized) return (
     <View style={styles.loading}>
@@ -31,53 +61,29 @@ export default function App() {
     </View>
   )
 
-  if (session) return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Sides</Text>
-      <Text style={styles.subtitle}>Welcome!</Text>
-      <TouchableOpacity style={styles.button} onPress={() => supabase.auth.signOut()}>
-        <Text style={styles.buttonText}>Sign Out</Text>
-      </TouchableOpacity>
-    </View>
+  if (!session) return <LoginScreen />
+
+  if (!hasProfile) return (
+    <ProfileSetupScreen onComplete={() => setHasProfile(true)} />
   )
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Sides</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#666"
-        value={email}
-        onChangeText={setEmail}
-        autoCapitalize="none"
-        keyboardType="email-address"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        placeholderTextColor="#666"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TouchableOpacity style={styles.button} onPress={async () => {
-        setLoading(true)
-        const { error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) Alert.alert('Error', error.message)
-        setLoading(false)
-      }} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Loading...' : 'Log In'}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.secondaryButton} onPress={async () => {
-        setLoading(true)
-        const { error } = await supabase.auth.signUp({ email, password })
-        if (error) Alert.alert('Error', error.message)
-        else Alert.alert('Success', 'Account created!')
-        setLoading(false)
-      }} disabled={loading}>
-        <Text style={styles.secondaryButtonText}>Create Account</Text>
-      </TouchableOpacity>
+      <View style={styles.content}>
+        {activeTab === 'discover' ? <DiscoverScreen /> : <HomeScreen />}
+      </View>
+      <View style={styles.tabBar}>
+        <TouchableOpacity style={styles.tab} onPress={() => setActiveTab('discover')}>
+          <Text style={[styles.tabText, activeTab === 'discover' && styles.tabActive]}>
+            Discover
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tab} onPress={() => setActiveTab('home')}>
+          <Text style={[styles.tabText, activeTab === 'home' && styles.tabActive]}>
+            Profile
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   )
 }
@@ -88,61 +94,39 @@ const styles = StyleSheet.create({
     backgroundColor: '#0f0f0f',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 24,
   },
   loadingText: {
     color: '#ffffff',
-    fontSize: 18,
+    fontSize: 16,
+    textAlign: 'center',
   },
   container: {
     flex: 1,
     backgroundColor: '#0f0f0f',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
   },
-  title: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 48,
+  content: {
+    flex: 1,
   },
-  subtitle: {
-    fontSize: 18,
-    color: '#888888',
-    marginBottom: 48,
-  },
-  input: {
-    width: '100%',
+  tabBar: {
+    flexDirection: 'row',
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    color: '#ffffff',
-    fontSize: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#333',
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+    paddingBottom: 24,
+    paddingTop: 12,
   },
-  button: {
-    width: '100%',
-    backgroundColor: '#6c47ff',
-    borderRadius: 12,
-    padding: 16,
+  tab: {
+    flex: 1,
     alignItems: 'center',
-    marginTop: 8,
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
+  tabText: {
+    color: '#666666',
+    fontSize: 14,
+    fontWeight: '500',
   },
-  secondaryButton: {
-    width: '100%',
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  secondaryButtonText: {
+  tabActive: {
     color: '#6c47ff',
-    fontSize: 16,
+    fontWeight: '700',
   },
 })
