@@ -7,9 +7,10 @@ import ProfileSetupScreen from './src/screens/ProfileSetupScreen'
 import DiscoverScreen from './src/screens/DiscoverScreen'
 import MatchesScreen from './src/screens/MatchesScreen'
 import MessagesScreen from './src/screens/MessagesScreen'
-import HomeScreen from './src/screens/HomeScreen'
+import CommunityScreen from './src/screens/CommunityScreen'
+import ProfileScreen from './src/screens/ProfileScreen'
 
-type Tab = 'discover' | 'matches' | 'profile'
+type Tab = 'discover' | 'matches' | 'community' | 'profile'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -75,7 +76,8 @@ export default function App() {
             onSelectMatch={(matchId, otherUser) => setActiveMatch({ matchId, otherUser })}
           />
         )}
-        {activeTab === 'profile' && <HomeScreen />}
+        {activeTab === 'community' && <CommunityScreen />}
+        {activeTab === 'profile' && <ProfileScreen />}
       </View>
       <View style={styles.tabBar}>
         <TouchableOpacity style={styles.tab} onPress={() => setActiveTab('discover')}>
@@ -83,6 +85,9 @@ export default function App() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.tab} onPress={() => setActiveTab('matches')}>
           <Text style={[styles.tabText, activeTab === 'matches' && styles.tabActive]}>Matches</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tab} onPress={() => setActiveTab('community')}>
+          <Text style={[styles.tabText, activeTab === 'community' && styles.tabActive]}>Community</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.tab} onPress={() => setActiveTab('profile')}>
           <Text style={[styles.tabText, activeTab === 'profile' && styles.tabActive]}>Profile</Text>
@@ -106,6 +111,6 @@ const styles = StyleSheet.create({
     paddingBottom: 24, paddingTop: 12,
   },
   tab: { flex: 1, alignItems: 'center' },
-  tabText: { color: '#666666', fontSize: 14, fontWeight: '500' },
+  tabText: { color: '#666666', fontSize: 12, fontWeight: '500' },
   tabActive: { color: '#6c47ff', fontWeight: '700' },
 })
