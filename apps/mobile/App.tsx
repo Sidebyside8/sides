@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from './src/lib/supabase'
 import LoginScreen from './src/screens/LoginScreen'
@@ -48,9 +49,9 @@ export default function App() {
   }
 
   if (!initialized) return (
-    <View style={styles.loading}>
-      <Text style={styles.loadingText}>Loading...</Text>
-    </View>
+    <LinearGradient colors={['#B8D4E8', '#E8C4A0']} start={{x:0,y:0}} end={{x:1,y:1}} style={{flex:1,alignItems:'center',justifyContent:'center'}}>
+      <Text style={{color:'#1a3a5a',fontSize:18}}>Loading...</Text>
+    </LinearGradient>
   )
 
   if (!session) return <LoginScreen />
@@ -98,19 +99,14 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  loading: {
-    flex: 1, backgroundColor: '#0f0f0f',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  loadingText: { color: '#ffffff', fontSize: 18 },
-  container: { flex: 1, backgroundColor: '#0f0f0f' },
+  container: { flex: 1, backgroundColor: '#E8D5C0' },
   content: { flex: 1 },
   tabBar: {
-    flexDirection: 'row', backgroundColor: '#1a1a1a',
-    borderTopWidth: 1, borderTopColor: '#333',
+    flexDirection: 'row', backgroundColor: 'rgba(232,196,160,0.95)',
+    borderTopWidth: 1, borderTopColor: 'rgba(200,160,120,0.5)',
     paddingBottom: 24, paddingTop: 12,
   },
   tab: { flex: 1, alignItems: 'center' },
-  tabText: { color: '#666666', fontSize: 12, fontWeight: '500' },
-  tabActive: { color: '#6c47ff', fontWeight: '700' },
+  tabText: { color: '#8899AA', fontSize: 12, fontWeight: '500' },
+  tabActive: { color: '#2196F3', fontWeight: '700' },
 })
