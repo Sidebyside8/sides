@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native'
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { supabase } from '../lib/supabase'
 
 export default function ProfileSetupScreen({ onComplete }: { onComplete: () => void }) {
@@ -21,137 +22,89 @@ export default function ProfileSetupScreen({ onComplete }: { onComplete: () => v
     setLoading(true)
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser()
-      console.log('getUser result:', user?.id, userError?.message)
-      if (!user) {
-        Alert.alert('Error', 'Not logged in: ' + (userError?.message || 'no user'))
-        setLoading(false)
-        return
-      }
+      if (!user) { Alert.alert('Error', 'Not logged in'); setLoading(false); return }
       const { data, error } = await supabase
         .from('users')
-        .upsert({
-          id: user.id,
-          username,
-          display_name: displayName,
-          bio,
-          age: parseInt(age),
-        })
+        .upsert({ id: user.id, username, display_name: displayName, bio, age: parseInt(age) })
         .select()
-      console.log('upsert result:', data, error?.message)
-      if (error) {
-        Alert.alert('Error saving', error.message)
-      } else {
-        onComplete()
-      }
+      if (error) Alert.alert('Error saving', error.message)
+      else onComplete()
     } catch (e: any) {
-      console.log('save error:', e.message)
       Alert.alert('Error', e.message)
     }
     setLoading(false)
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Set Up Your Profile</Text>
-      <Text style={styles.subtitle}>Tell the community about yourself</Text>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <LinearGradient colors={['#B8D4E8', '#E8C4A0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <Text style={styles.title}>Set Up Your Profile</Text>
+          <Text style={styles.subtitle}>Tell the community about yourself</Text>
 
-      <Text style={styles.label}>Username</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g. john_doe"
-        placeholderTextColor="#666"
-        value={username}
-        onChangeText={setUsername}
-        autoCapitalize="none"
-      />
+          <Text style={styles.label}>Username</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. john_doe"
+            placeholderTextColor="#888"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+          />
 
-      <Text style={styles.label}>Display Name</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="e.g. John"
-        placeholderTextColor="#666"
-        value={displayName}
-        onChangeText={setDisplayName}
-      />
+          <Text style={styles.label}>Display Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. John"
+            placeholderTextColor="#888"
+            value={displayName}
+            onChangeText={setDisplayName}
+          />
 
-      <Text style={styles.label}>Age</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Must be 18+"
-        placeholderTextColor="#666"
-        value={age}
-        onChangeText={setAge}
-        keyboardType="number-pad"
-      />
+          <Text style={styles.label}>Age</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Must be 18+"
+            placeholderTextColor="#888"
+            value={age}
+            onChangeText={setAge}
+            keyboardType="number-pad"
+          />
 
-      <Text style={styles.label}>Bio</Text>
-      <TextInput
-        style={[styles.input, styles.bioInput]}
-        placeholder="Tell people about yourself..."
-        placeholderTextColor="#666"
-        value={bio}
-        onChangeText={setBio}
-        multiline
-        numberOfLines={4}
-      />
+          <Text style={styles.label}>Bio</Text>
+          <TextInput
+            style={[styles.input, styles.bioInput]}
+            placeholder="Tell people about yourself..."
+            placeholderTextColor="#888"
+            value={bio}
+            onChangeText={setBio}
+            multiline
+            numberOfLines={4}
+          />
 
-      <TouchableOpacity style={styles.button} onPress={handleSave} disabled={loading}>
-        <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Continue'}</Text>
-      </TouchableOpacity>
-    </ScrollView>
+          <TouchableOpacity style={styles.button} onPress={handleSave} disabled={loading}>
+            <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Continue'}</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0f0f0f',
-  },
-  content: {
-    padding: 24,
-    paddingTop: 60,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#888888',
-    marginBottom: 32,
-  },
-  label: {
-    fontSize: 14,
-    color: '#aaaaaa',
-    marginBottom: 8,
-    fontWeight: '500',
-  },
+  content: { padding: 24, paddingTop: 80, paddingBottom: 40 },
+  title: { fontSize: 32, fontWeight: 'bold', color: '#1a2a3a', marginBottom: 8 },
+  subtitle: { fontSize: 16, color: '#556677', marginBottom: 32 },
+  label: { fontSize: 14, color: '#445566', marginBottom: 8, fontWeight: '600' },
   input: {
-    backgroundColor: '#1a1a1a',
-    borderRadius: 12,
-    padding: 16,
-    color: '#ffffff',
-    fontSize: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#333',
+    backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 12,
+    padding: 16, color: '#1a2a3a', fontSize: 16, marginBottom: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
   },
-  bioInput: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
+  bioInput: { height: 100, textAlignVertical: 'top' },
   button: {
-    backgroundColor: '#6c47ff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 8,
+    backgroundColor: '#2196F3', borderRadius: 12,
+    padding: 16, alignItems: 'center', marginTop: 8,
   },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
+  buttonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
 })
