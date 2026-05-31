@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Session } from '@supabase/supabase-js'
@@ -16,25 +16,39 @@ type Tab = 'discover' | 'matches' | 'community' | 'profile'
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
   const [initialized, setInitialized] = useState(false)
-  const [hasProfile, setHasProfile] = useState(false)
+  const [hasProfile, setHasProfile] = useState<boolean | null>(null)
   const [activeTab, setActiveTab] = useState<Tab>('discover')
   const [activeMatch, setActiveMatch] = useState<{ matchId: string; otherUser: any } | null>(null)
+  const profileChecked = useRef<string | null>(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
-      if (session) checkProfile(session.user.id)
-      else setInitialized(true)
+      if (session) {
+        checkProfile(session.user.id)
+      } else {
+        setHasProfile(false)
+        setInitialized(true)
+      }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
-      if (session) checkProfile(session.user.id)
-      else { setHasProfile(false); setInitialized(true) }
+      if (session) {
+        if (profileChecked.current !== session.user.id) {
+          checkProfile(session.user.id)
+        }
+      } else {
+        profileChecked.current = null
+        setHasProfile(false)
+        setInitialized(true)
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
 
   const checkProfile = async (userId: string) => {
+    if (profileChecked.current === userId) return
+    profileChecked.current = userId
     try {
       const { data } = await supabase
         .from('users')
@@ -48,7 +62,7 @@ export default function App() {
     setInitialized(true)
   }
 
-  if (!initialized) return (
+  if (!initialized || hasProfile === null) return (
     <LinearGradient colors={['#B8D4E8', '#E8C4A0']} start={{x:0,y:0}} end={{x:1,y:1}} style={{flex:1,alignItems:'center',justifyContent:'center'}}>
       <Text style={{color:'#1a3a5a',fontSize:18}}>Loading...</Text>
     </LinearGradient>
