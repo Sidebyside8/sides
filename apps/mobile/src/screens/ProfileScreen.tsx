@@ -34,25 +34,14 @@ export default function ProfileScreen() {
   const loadProfile = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
     const { data } = await supabase.from('users').select('*').eq('id', user.id).single()
-    if (data) {
-      setProfile(data)
-      setEditData(data)
-    }
-
+    if (data) { setProfile(data); setEditData(data) }
     const [likesRes, matchesRes, postsRes] = await Promise.all([
       supabase.from('likes').select('id', { count: 'exact' }).eq('liker_id', user.id),
       supabase.from('matches').select('id', { count: 'exact' }).or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`),
       supabase.from('community_posts').select('id', { count: 'exact' }).eq('user_id', user.id),
     ])
-
-    setStats({
-      likes: likesRes.count || 0,
-      matches: matchesRes.count || 0,
-      posts: postsRes.count || 0,
-    })
-
+    setStats({ likes: likesRes.count || 0, matches: matchesRes.count || 0, posts: postsRes.count || 0 })
     setLoading(false)
   }
 
@@ -60,25 +49,15 @@ export default function ProfileScreen() {
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-
-    const { error } = await supabase
-      .from('users')
-      .update({
-        display_name: editData.display_name,
-        bio: editData.bio,
-        location: editData.location,
-        looking_for: editData.looking_for,
-        relationship_type: editData.relationship_type,
-      })
-      .eq('id', user.id)
-
-    if (error) {
-      Alert.alert('Error', error.message)
-    } else {
-      setProfile(prev => prev ? { ...prev, ...editData } : prev)
-      setEditing(false)
-      Alert.alert('Saved!', 'Your profile has been updated')
-    }
+    const { error } = await supabase.from('users').update({
+      display_name: editData.display_name,
+      bio: editData.bio,
+      location: editData.location,
+      looking_for: editData.looking_for,
+      relationship_type: editData.relationship_type,
+    }).eq('id', user.id)
+    if (error) Alert.alert('Error', error.message)
+    else { setProfile(prev => prev ? { ...prev, ...editData } : prev); setEditing(false); Alert.alert('Saved!', 'Profile updated') }
     setSaving(false)
   }
 
@@ -93,14 +72,15 @@ export default function ProfileScreen() {
     <View style={styles.loading}><Text style={styles.loadingText}>Loading profile...</Text></View>
   )
 
+  const editButton = (
+    <TouchableOpacity onPress={() => editing ? handleSave() : setEditing(true)} style={styles.editButton}>
+      <Text style={styles.editButtonText}>{editing ? (saving ? 'Saving...' : 'Save') : 'Edit'}</Text>
+    </TouchableOpacity>
+  )
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.headerRow}>
-        <SydeHeader title="Profile" />
-        <TouchableOpacity onPress={() => editing ? handleSave() : setEditing(true)} style={styles.editButton}>
-          <Text style={styles.editButtonText}>{editing ? (saving ? 'Saving...' : 'Save') : 'Edit'}</Text>
-        </TouchableOpacity>
-      </View>
+      <SydeHeader title="Profile" rightAction={editButton} />
 
       <View style={styles.avatarContainer}>
         <View style={styles.avatar}>
@@ -146,59 +126,34 @@ export default function ProfileScreen() {
 
         <Text style={styles.infoLabel}>Bio</Text>
         {editing ? (
-          <TextInput
-            style={[styles.editInput, styles.bioInput]}
-            value={editData.bio}
+          <TextInput style={[styles.editInput, styles.bioInput]} value={editData.bio}
             onChangeText={v => setEditData(prev => ({ ...prev, bio: v }))}
-            placeholder="Tell people about yourself..."
-            placeholderTextColor="#888"
-            multiline
-          />
-        ) : (
-          <Text style={styles.infoValue}>{profile?.bio || 'No bio yet'}</Text>
-        )}
+            placeholder="Tell people about yourself..." placeholderTextColor="#888" multiline />
+        ) : <Text style={styles.infoValue}>{profile?.bio || 'No bio yet'}</Text>}
 
         <Text style={styles.infoLabel}>Age</Text>
         <Text style={styles.infoValue}>{profile?.age}</Text>
 
         <Text style={styles.infoLabel}>Location</Text>
         {editing ? (
-          <TextInput
-            style={styles.editInput}
-            value={editData.location}
+          <TextInput style={styles.editInput} value={editData.location}
             onChangeText={v => setEditData(prev => ({ ...prev, location: v }))}
-            placeholder="e.g. New York, NY"
-            placeholderTextColor="#888"
-          />
-        ) : (
-          <Text style={styles.infoValue}>{profile?.location || 'Not set'}</Text>
-        )}
+            placeholder="e.g. New York, NY" placeholderTextColor="#888" />
+        ) : <Text style={styles.infoValue}>{profile?.location || 'Not set'}</Text>}
 
         <Text style={styles.infoLabel}>Looking For</Text>
         {editing ? (
-          <TextInput
-            style={styles.editInput}
-            value={editData.looking_for}
+          <TextInput style={styles.editInput} value={editData.looking_for}
             onChangeText={v => setEditData(prev => ({ ...prev, looking_for: v }))}
-            placeholder="e.g. Friends, Dating, Relationship"
-            placeholderTextColor="#888"
-          />
-        ) : (
-          <Text style={styles.infoValue}>{profile?.looking_for || 'Not set'}</Text>
-        )}
+            placeholder="e.g. Friends, Dating, Relationship" placeholderTextColor="#888" />
+        ) : <Text style={styles.infoValue}>{profile?.looking_for || 'Not set'}</Text>}
 
         <Text style={styles.infoLabel}>Relationship Type</Text>
         {editing ? (
-          <TextInput
-            style={styles.editInput}
-            value={editData.relationship_type}
+          <TextInput style={styles.editInput} value={editData.relationship_type}
             onChangeText={v => setEditData(prev => ({ ...prev, relationship_type: v }))}
-            placeholder="e.g. Monogamous, Open, Casual"
-            placeholderTextColor="#888"
-          />
-        ) : (
-          <Text style={styles.infoValue}>{profile?.relationship_type || 'Not set'}</Text>
-        )}
+            placeholder="e.g. Monogamous, Open, Casual" placeholderTextColor="#888" />
+        ) : <Text style={styles.infoValue}>{profile?.relationship_type || 'Not set'}</Text>}
       </View>
 
       {editing && (
@@ -216,12 +171,10 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#E8D5C0' },
-  content: { padding: 24, paddingTop: 60, paddingBottom: 40 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
-  header: { fontSize: 28, fontWeight: 'bold', color: '#1a2a3a' },
+  content: { paddingBottom: 40 },
   editButton: { backgroundColor: '#2196F3', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
   editButtonText: { color: '#ffffff', fontWeight: '600', fontSize: 14 },
-  avatarContainer: { alignItems: 'center', marginBottom: 24 },
+  avatarContainer: { alignItems: 'center', marginBottom: 24, paddingHorizontal: 24 },
   avatar: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#2196F3', alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   avatarImage: { width: 100, height: 100, borderRadius: 50 },
   avatarText: { color: '#ffffff', fontSize: 40, fontWeight: 'bold' },
@@ -234,7 +187,7 @@ const styles = StyleSheet.create({
   username: { color: '#556677', fontSize: 15 },
   statsRow: {
     flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.6)',
-    borderRadius: 16, padding: 16, marginBottom: 16,
+    borderRadius: 16, padding: 16, marginHorizontal: 24, marginBottom: 16,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
   },
   statBox: { flex: 1, alignItems: 'center' },
@@ -243,7 +196,7 @@ const styles = StyleSheet.create({
   statDivider: { width: 1, backgroundColor: 'rgba(0,0,0,0.1)' },
   infoCard: {
     backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 16,
-    padding: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', marginBottom: 16,
+    padding: 16, marginHorizontal: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', marginBottom: 16,
   },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1a2a3a', marginBottom: 16 },
   infoLabel: { fontSize: 12, color: '#556677', fontWeight: '600', marginBottom: 4, textTransform: 'uppercase' },
@@ -256,13 +209,13 @@ const styles = StyleSheet.create({
   bioInput: { height: 80, textAlignVertical: 'top' },
   cancelButton: {
     backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 12,
-    padding: 16, alignItems: 'center', marginBottom: 12,
+    padding: 16, alignItems: 'center', marginHorizontal: 24, marginBottom: 12,
     borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)',
   },
   cancelButtonText: { color: '#556677', fontSize: 16, fontWeight: '600' },
   signOutButton: {
     backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 12,
-    padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#F15A22',
+    padding: 16, alignItems: 'center', marginHorizontal: 24, borderWidth: 1, borderColor: '#F15A22',
   },
   signOutText: { color: '#F15A22', fontSize: 16, fontWeight: '600' },
   loading: { flex: 1, backgroundColor: '#E8D5C0', alignItems: 'center', justifyContent: 'center' },
