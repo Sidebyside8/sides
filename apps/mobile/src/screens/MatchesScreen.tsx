@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, Image } from 'react-native'
 import { supabase } from '../lib/supabase'
+import SydeHeader from '../components/SydeHeader'
 
 type Match = {
   id: string
@@ -64,7 +65,7 @@ export default function MatchesScreen({ onSelectMatch }: { onSelectMatch: (match
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Matches</Text>
+      <SydeHeader title="Matches" />
       <FlatList
         data={matches}
         keyExtractor={item => item.id}

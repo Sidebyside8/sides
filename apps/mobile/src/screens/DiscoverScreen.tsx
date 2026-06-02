@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, Image } from 'react-native'
 import { supabase } from '../lib/supabase'
+import SydeHeader from '../components/SydeHeader'
 
 type User = {
   id: string
@@ -56,7 +57,7 @@ export default function DiscoverScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Discover</Text>
+      <SydeHeader title="Discover" />
       <FlatList
         data={users}
         keyExtractor={item => item.id}

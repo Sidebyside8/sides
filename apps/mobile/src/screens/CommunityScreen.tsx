@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert, KeyboardAvoidingView, Platform } from 'react-native'
 import { supabase } from '../lib/supabase'
+import SydeHeader from '../components/SydeHeader'
 
 type Post = {
   id: string
@@ -66,7 +67,7 @@ export default function CommunityScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <Text style={styles.header}>Community</Text>
+      <SydeHeader title="Community" />
       <View style={styles.postBox}>
         <TextInput
           style={styles.postInput}

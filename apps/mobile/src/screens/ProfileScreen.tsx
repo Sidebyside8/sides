@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, TextInput } from 'react-native'
 import { supabase } from '../lib/supabase'
+import SydeHeader from '../components/SydeHeader'
 
 type Profile = {
   id: string
@@ -95,7 +96,7 @@ export default function ProfileScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.headerRow}>
-        <Text style={styles.header}>Profile</Text>
+        <SydeHeader title="Profile" />
         <TouchableOpacity onPress={() => editing ? handleSave() : setEditing(true)} style={styles.editButton}>
           <Text style={styles.editButtonText}>{editing ? (saving ? 'Saving...' : 'Save') : 'Edit'}</Text>
         </TouchableOpacity>
