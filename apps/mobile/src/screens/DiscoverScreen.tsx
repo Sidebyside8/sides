@@ -1,110 +1,88 @@
-import { useEffect, useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, Image } from 'react-native'
-import { supabase } from '../lib/supabase'
-import SydeHeader from '../components/SydeHeader'
-
-type User = {
-  id: string
-  username: string
-  display_name: string
-  bio: string
-  age: number
-  avatar_url?: string
+import{useEffect,useState}from'react'
+import{View,Text,TouchableOpacity,StyleSheet,FlatList,Alert,Image}from'react-native'
+import{supabase}from'../lib/supabase'
+import SydeHeader from'../components/SydeHeader'
+type User={id:string;username:string;display_name:string;bio:string;age:number;avatar_url?:string;location?:string}
+export default function DiscoverScreen(){
+const[users,setUsers]=useState<User[]>([])
+const[loading,setLoading]=useState(true)
+const[currentUserId,setCurrentUserId]=useState<string|null>(null)
+const[currentLocation,setCurrentLocation]=useState<string|null>(null)
+const[filter,setFilter]=useState<'nearby'|'global'>('global')
+useEffect(()=>{loadUsers()},[filter])
+const loadUsers=async()=>{
+setLoading(true)
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+setCurrentUserId(user.id)
+const{data:myProfile}=await supabase.from('users').select('location').eq('id',user.id).single()
+setCurrentLocation(myProfile?.location||null)
+let query=supabase.from('users').select('id,username,display_name,bio,age,avatar_url,location').neq('id',user.id).eq('is_active',true).limit(50)
+if(filter==='nearby'&&myProfile?.location){query=query.ilike('location',`%${myProfile.location.split(',')[0].trim()}%`)}
+const{data,error}=await query
+if(error)Alert.alert('Error',error.message)
+else setUsers(data||[])
+setLoading(false)
 }
-
-export default function DiscoverScreen() {
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-
-  useEffect(() => { loadUsers() }, [])
-
-  const loadUsers = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    setCurrentUserId(user.id)
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, username, display_name, bio, age, avatar_url')
-      .neq('id', user.id)
-      .eq('is_active', true)
-      .limit(20)
-    if (error) Alert.alert('Error', error.message)
-    else setUsers(data || [])
-    setLoading(false)
-  }
-
-  const handleLike = async (likedId: string) => {
-    const { error } = await supabase
-      .from('likes')
-      .insert({ liker_id: currentUserId, liked_id: likedId })
-    if (error) Alert.alert('Error', error.message)
-    else setUsers(prev => prev.filter(u => u.id !== likedId))
-  }
-
-  return (
-    <View style={styles.container}>
-      <SydeHeader title="Discover" />
-      {loading ? (
-        <View style={styles.center}>
-          <Text style={styles.loadingText}>Finding people...</Text>
-        </View>
-      ) : users.length === 0 ? (
-        <View style={styles.center}>
-          <Text style={styles.loadingText}>No one here yet</Text>
-          <Text style={styles.subText}>Check back soon!</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={users}
-          keyExtractor={item => item.id}
-          contentContainerStyle={styles.list}
-          renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardLeft}>
-                {item.avatar_url ? (
-                  <Image source={{ uri: item.avatar_url }} style={styles.avatarImage} />
-                ) : (
-                  <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{item.display_name?.[0] || '?'}</Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.info}>
-                <Text style={styles.name}>{item.display_name}</Text>
-                <Text style={styles.username}>@{item.username} · {item.age}</Text>
-                {item.bio ? <Text style={styles.bio} numberOfLines={2}>{item.bio}</Text> : null}
-              </View>
-              <TouchableOpacity style={styles.likeButton} onPress={() => handleLike(item.id)}>
-                <Text style={styles.likeText}>♥</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        />
-      )}
-    </View>
-  )
+const handleLike=async(likedId:string)=>{
+const{error}=await supabase.from('likes').insert({liker_id:currentUserId,liked_id:likedId})
+if(error)Alert.alert('Error',error.message)
+else setUsers(prev=>prev.filter(u=>u.id!==likedId))
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#E8D5C0' },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  list: { paddingHorizontal: 16, paddingBottom: 24 },
-  card: {
-    backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 16, padding: 16,
-    marginBottom: 12, flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
-  },
-  cardLeft: { marginRight: 12 },
-  avatarImage: { width: 52, height: 52, borderRadius: 26 },
-  avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#2196F3', alignItems: 'center', justifyContent: 'center' },
-  avatarText: { color: '#ffffff', fontSize: 22, fontWeight: 'bold' },
-  info: { flex: 1 },
-  name: { color: '#1a2a3a', fontSize: 16, fontWeight: '600', marginBottom: 2 },
-  username: { color: '#556677', fontSize: 13, marginBottom: 4 },
-  bio: { color: '#445566', fontSize: 13 },
-  likeButton: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(241,90,34,0.15)', alignItems: 'center', justifyContent: 'center' },
-  likeText: { color: '#F15A22', fontSize: 22 },
-  loadingText: { color: '#1a2a3a', fontSize: 18, fontWeight: '600' },
-  subText: { color: '#556677', fontSize: 14, marginTop: 8 },
+return(
+<View style={s.container}>
+<SydeHeader title="Discover"/>
+<View style={s.filterRow}>
+<TouchableOpacity style={[s.filterTab,filter==='nearby'&&s.filterTabActive]} onPress={()=>setFilter('nearby')}>
+<Text style={[s.filterText,filter==='nearby'&&s.filterTextActive]}>📍 Nearby</Text>
+</TouchableOpacity>
+<TouchableOpacity style={[s.filterTab,filter==='global'&&s.filterTabActive]} onPress={()=>setFilter('global')}>
+<Text style={[s.filterText,filter==='global'&&s.filterTextActive]}>🌍 Global</Text>
+</TouchableOpacity>
+</View>
+{filter==='nearby'&&!currentLocation&&<View style={s.banner}><Text style={s.bannerText}>Add your location in Profile to see nearby people</Text></View>}
+{loading?<View style={s.center}><Text style={s.loadingText}>Finding people...</Text></View>
+:users.length===0?<View style={s.center}><Text style={s.loadingText}>{filter==='nearby'?'No one nearby yet':'No one here yet'}</Text><Text style={s.subText}>{filter==='nearby'?'Try switching to Global':'Check back soon!'}</Text></View>
+:<FlatList data={users} keyExtractor={i=>i.id} contentContainerStyle={s.list} renderItem={({item})=>(
+<View style={s.card}>
+<View style={s.cardLeft}>
+{item.avatar_url?<Image source={{uri:item.avatar_url}} style={s.avatarImage}/>:<View style={s.avatar}><Text style={s.avatarText}>{item.display_name?.[0]||'?'}</Text></View>}
+</View>
+<View style={s.info}>
+<Text style={s.name}>{item.display_name}</Text>
+<Text style={s.username}>@{item.username} · {item.age}</Text>
+{item.location?<Text style={s.location}>📍 {item.location}</Text>:null}
+{item.bio?<Text style={s.bio} numberOfLines={2}>{item.bio}</Text>:null}
+</View>
+<TouchableOpacity style={s.likeButton} onPress={()=>handleLike(item.id)}><Text style={s.likeText}>♥</Text></TouchableOpacity>
+</View>
+)}/>}
+</View>
+)
+}
+const s=StyleSheet.create({
+container:{flex:1,backgroundColor:'#E8D5C0'},
+filterRow:{flexDirection:'row',marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(255,255,255,0.4)',borderRadius:12,padding:4},
+filterTab:{flex:1,paddingVertical:8,alignItems:'center',borderRadius:10},
+filterTabActive:{backgroundColor:'#2196F3'},
+filterText:{fontSize:14,color:'#556677',fontWeight:'500'},
+filterTextActive:{color:'#ffffff',fontWeight:'700'},
+banner:{marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(241,90,34,0.1)',borderRadius:10,padding:12,borderWidth:1,borderColor:'rgba(241,90,34,0.3)'},
+bannerText:{color:'#F15A22',fontSize:13,textAlign:'center'},
+center:{flex:1,alignItems:'center',justifyContent:'center'},
+list:{paddingHorizontal:16,paddingBottom:24},
+card:{backgroundColor:'rgba(255,255,255,0.6)',borderRadius:16,padding:16,marginBottom:12,flexDirection:'row',alignItems:'center',borderWidth:1,borderColor:'rgba(255,255,255,0.8)'},
+cardLeft:{marginRight:12},
+avatarImage:{width:52,height:52,borderRadius:26},
+avatar:{width:52,height:52,borderRadius:26,backgroundColor:'#2196F3',alignItems:'center',justifyContent:'center'},
+avatarText:{color:'#ffffff',fontSize:22,fontWeight:'bold'},
+info:{flex:1},
+name:{color:'#1a2a3a',fontSize:16,fontWeight:'600',marginBottom:2},
+username:{color:'#556677',fontSize:13,marginBottom:2},
+location:{color:'#2196F3',fontSize:12,marginBottom:2},
+bio:{color:'#445566',fontSize:13},
+likeButton:{width:44,height:44,borderRadius:22,backgroundColor:'rgba(241,90,34,0.15)',alignItems:'center',justifyContent:'center'},
+likeText:{color:'#F15A22',fontSize:22},
+loadingText:{color:'#1a2a3a',fontSize:18,fontWeight:'600'},
+subText:{color:'#556677',fontSize:14,marginTop:8},
 })
