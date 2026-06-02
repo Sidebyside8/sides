@@ -9,6 +9,7 @@ const[loading,setLoading]=useState(true)
 const[currentUserId,setCurrentUserId]=useState<string|null>(null)
 const[currentLocation,setCurrentLocation]=useState<string|null>(null)
 const[filter,setFilter]=useState<'nearby'|'global'>('global')
+const[favorites,setFavorites]=useState<Set<string>>(new Set())
 useEffect(()=>{loadUsers()},[filter])
 const loadUsers=async()=>{
 setLoading(true)
@@ -17,6 +18,8 @@ if(!user)return
 setCurrentUserId(user.id)
 const{data:myProfile}=await supabase.from('users').select('location').eq('id',user.id).single()
 setCurrentLocation(myProfile?.location||null)
+const{data:favData}=await supabase.from('favorites').select('favorited_id').eq('user_id',user.id)
+if(favData)setFavorites(new Set(favData.map((f:any)=>f.favorited_id)))
 let query=supabase.from('users').select('id,username,display_name,bio,age,avatar_url,location').neq('id',user.id).eq('is_active',true).limit(50)
 if(filter==='nearby'&&myProfile?.location){query=query.ilike('location',`%${myProfile.location.split(',')[0].trim()}%`)}
 const{data,error}=await query
@@ -28,6 +31,16 @@ const handleLike=async(likedId:string)=>{
 const{error}=await supabase.from('likes').insert({liker_id:currentUserId,liked_id:likedId})
 if(error)Alert.alert('Error',error.message)
 else setUsers(prev=>prev.filter(u=>u.id!==likedId))
+}
+const handleFavorite=async(favId:string)=>{
+const isFav=favorites.has(favId)
+if(isFav){
+await supabase.from('favorites').delete().eq('user_id',currentUserId).eq('favorited_id',favId)
+setFavorites(prev=>{const n=new Set(prev);n.delete(favId);return n})
+}else{
+await supabase.from('favorites').insert({user_id:currentUserId,favorited_id:favId})
+setFavorites(prev=>new Set([...prev,favId]))
+}
 }
 return(
 <View style={s.container}>
@@ -54,7 +67,14 @@ return(
 {item.location?<Text style={s.location}>📍 {item.location}</Text>:null}
 {item.bio?<Text style={s.bio} numberOfLines={2}>{item.bio}</Text>:null}
 </View>
-<TouchableOpacity style={s.likeButton} onPress={()=>handleLike(item.id)}><Text style={s.likeText}>♥</Text></TouchableOpacity>
+<View style={s.actions}>
+<TouchableOpacity style={s.starButton} onPress={()=>handleFavorite(item.id)}>
+<Text style={[s.starText,favorites.has(item.id)&&s.starActive]}>{favorites.has(item.id)?'★':'☆'}</Text>
+</TouchableOpacity>
+<TouchableOpacity style={s.likeButton} onPress={()=>handleLike(item.id)}>
+<Text style={s.likeText}>♥</Text>
+</TouchableOpacity>
+</View>
 </View>
 )}/>}
 </View>
@@ -81,8 +101,12 @@ name:{color:'#1a2a3a',fontSize:16,fontWeight:'600',marginBottom:2},
 username:{color:'#556677',fontSize:13,marginBottom:2},
 location:{color:'#2196F3',fontSize:12,marginBottom:2},
 bio:{color:'#445566',fontSize:13},
-likeButton:{width:44,height:44,borderRadius:22,backgroundColor:'rgba(241,90,34,0.15)',alignItems:'center',justifyContent:'center'},
-likeText:{color:'#F15A22',fontSize:22},
+actions:{flexDirection:'column',alignItems:'center',gap:6},
+starButton:{width:36,height:36,alignItems:'center',justifyContent:'center'},
+starText:{fontSize:22,color:'#aabbcc'},
+starActive:{color:'#F15A22'},
+likeButton:{width:36,height:36,borderRadius:18,backgroundColor:'rgba(241,90,34,0.15)',alignItems:'center',justifyContent:'center'},
+likeText:{color:'#F15A22',fontSize:20},
 loadingText:{color:'#1a2a3a',fontSize:18,fontWeight:'600'},
 subText:{color:'#556677',fontSize:14,marginTop:8},
 })
