@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Image, TextInput } from 'react-native'
 import { supabase } from '../lib/supabase'
+import BlockedUsersScreen from "./BlockedUsersScreen"
 import SydeHeader from '../components/SydeHeader'
 
 type Profile = {
@@ -28,6 +29,7 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(false)
   const [editData, setEditData] = useState<Partial<Profile>>({})
   const [saving, setSaving] = useState(false)
+  const [showBlocked, setShowBlocked] = useState(false)
 
   useEffect(() => { loadProfile() }, [])
 
@@ -67,6 +69,8 @@ export default function ProfileScreen() {
       { text: 'Sign Out', style: 'destructive', onPress: () => supabase.auth.signOut() },
     ])
   }
+
+  if (showBlocked) return <BlockedUsersScreen onBack={() => setShowBlocked(false)} />
 
   if (loading) return (
     <View style={styles.loading}><Text style={styles.loadingText}>Loading profile...</Text></View>
@@ -162,6 +166,10 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       )}
 
+      <TouchableOpacity style={styles.blockedButton} onPress={() => setShowBlocked(true)}>
+        <Text style={styles.blockedButtonText}>🚫 Manage Blocked Users</Text>
+      </TouchableOpacity>
+
       <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
         <Text style={styles.signOutText}>Sign Out</Text>
       </TouchableOpacity>
@@ -213,6 +221,12 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)',
   },
   cancelButtonText: { color: '#556677', fontSize: 16, fontWeight: '600' },
+  blockedButton: {
+    backgroundColor: "rgba(255,255,255,0.5)", borderRadius: 12,
+    padding: 16, alignItems: "center", marginHorizontal: 24, marginBottom: 12,
+    borderWidth: 1, borderColor: "rgba(0,0,0,0.15)",
+  },
+  blockedButtonText: { color: "#556677", fontSize: 16, fontWeight: "600" },
   signOutButton: {
     backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 12,
     padding: 16, alignItems: 'center', marginHorizontal: 24, borderWidth: 1, borderColor: '#F15A22',

@@ -20,11 +20,13 @@ const{data:myProfile}=await supabase.from('users').select('location').eq('id',us
 setCurrentLocation(myProfile?.location||null)
 const{data:favData}=await supabase.from('favorites').select('favorited_id').eq('user_id',user.id)
 if(favData)setFavorites(new Set(favData.map((f:any)=>f.favorited_id)))
+const{data:blockData}=await supabase.from('blocks').select('blocked_id').eq('blocker_id',user.id)
+const blockedIds=blockData?blockData.map((b:any)=>b.blocked_id):[]
 let query=supabase.from('users').select('id,username,display_name,bio,age,avatar_url,location').neq('id',user.id).eq('is_active',true).limit(50)
 if(filter==='nearby'&&myProfile?.location){query=query.ilike('location',`%${myProfile.location.split(',')[0].trim()}%`)}
 const{data,error}=await query
 if(error)Alert.alert('Error',error.message)
-else setUsers(data||[])
+else setUsers((data||[]).filter((u:User)=>!blockedIds.includes(u.id)))
 setLoading(false)
 }
 const handleLike=async(likedId:string)=>{
@@ -41,6 +43,15 @@ setFavorites(prev=>{const n=new Set(prev);n.delete(favId);return n})
 await supabase.from('favorites').insert({user_id:currentUserId,favorited_id:favId})
 setFavorites(prev=>new Set([...prev,favId]))
 }
+}
+const handleBlock=async(blockedId:string,name:string)=>{
+Alert.alert('Block User',`Are you sure you want to block ${name}? They will no longer appear in your discover feed.`,[
+{text:'Cancel',style:'cancel'},
+{text:'Block',style:'destructive',onPress:async()=>{
+await supabase.from('blocks').insert({blocker_id:currentUserId,blocked_id:blockedId})
+setUsers(prev=>prev.filter(u=>u.id!==blockedId))
+}}
+])
 }
 return(
 <View style={s.container}>
@@ -74,6 +85,9 @@ return(
 <TouchableOpacity style={s.likeButton} onPress={()=>handleLike(item.id)}>
 <Text style={s.likeText}>♥</Text>
 </TouchableOpacity>
+<TouchableOpacity style={s.blockButton} onPress={()=>handleBlock(item.id,item.display_name)}>
+<Text style={s.blockText}>🚫</Text>
+</TouchableOpacity>
 </View>
 </View>
 )}/>}
@@ -101,12 +115,14 @@ name:{color:'#1a2a3a',fontSize:16,fontWeight:'600',marginBottom:2},
 username:{color:'#556677',fontSize:13,marginBottom:2},
 location:{color:'#2196F3',fontSize:12,marginBottom:2},
 bio:{color:'#445566',fontSize:13},
-actions:{flexDirection:'column',alignItems:'center',gap:6},
-starButton:{width:36,height:36,alignItems:'center',justifyContent:'center'},
-starText:{fontSize:22,color:'#aabbcc'},
+actions:{flexDirection:'column',alignItems:'center',gap:4},
+starButton:{width:32,height:32,alignItems:'center',justifyContent:'center'},
+starText:{fontSize:20,color:'#aabbcc'},
 starActive:{color:'#F15A22'},
-likeButton:{width:36,height:36,borderRadius:18,backgroundColor:'rgba(241,90,34,0.15)',alignItems:'center',justifyContent:'center'},
-likeText:{color:'#F15A22',fontSize:20},
+likeButton:{width:32,height:32,borderRadius:16,backgroundColor:'rgba(241,90,34,0.15)',alignItems:'center',justifyContent:'center'},
+likeText:{color:'#F15A22',fontSize:18},
+blockButton:{width:32,height:32,alignItems:'center',justifyContent:'center'},
+blockText:{fontSize:16},
 loadingText:{color:'#1a2a3a',fontSize:18,fontWeight:'600'},
 subText:{color:'#556677',fontSize:14,marginTop:8},
 })
