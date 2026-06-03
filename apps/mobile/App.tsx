@@ -10,8 +10,7 @@ import MatchesScreen from'./src/screens/MatchesScreen'
 import MessagesScreen from'./src/screens/MessagesScreen'
 import CommunityScreen from'./src/screens/CommunityScreen'
 import ProfileScreen from'./src/screens/ProfileScreen'
-import FavoritesScreen from'./src/screens/FavoritesScreen'
-type Tab='discover'|'favorites'|'matches'|'community'|'profile'
+type Tab='discover'|'matches'|'community'|'profile'
 export default function App(){
 const[session,setSession]=useState<Session|null>(null)
 const[initialized,setInitialized]=useState(false)
@@ -53,7 +52,6 @@ return(
 <View style={s.container}>
 <View style={s.content}>
 {activeTab==='discover'&&<DiscoverScreen/>}
-{activeTab==='favorites'&&<FavoritesScreen/>}
 {activeTab==='matches'&&<MatchesScreen onSelectMatch={(matchId,otherUser)=>setActiveMatch({matchId,otherUser})}/>}
 {activeTab==='community'&&<CommunityScreen/>}
 {activeTab==='profile'&&<ProfileScreen/>}
@@ -61,9 +59,6 @@ return(
 <View style={s.tabBar}>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('discover')}>
 <Text style={[s.tabText,activeTab==='discover'&&s.tabActive]}>Discover</Text>
-</TouchableOpacity>
-<TouchableOpacity style={s.tab} onPress={()=>setActiveTab('favorites')}>
-<Text style={[s.tabText,activeTab==='favorites'&&s.tabActive]}>★ Saved</Text>
 </TouchableOpacity>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('matches')}>
 <Text style={[s.tabText,activeTab==='matches'&&s.tabActive]}>Matches</Text>
@@ -83,6 +78,6 @@ container:{flex:1,backgroundColor:'#E8D5C0'},
 content:{flex:1},
 tabBar:{flexDirection:'row',backgroundColor:'rgba(232,196,160,0.95)',borderTopWidth:1,borderTopColor:'rgba(200,160,120,0.5)',paddingBottom:24,paddingTop:12},
 tab:{flex:1,alignItems:'center'},
-tabText:{color:'#8899AA',fontSize:10,fontWeight:'500'},
+tabText:{color:'#8899AA',fontSize:12,fontWeight:'500'},
 tabActive:{color:'#2196F3',fontWeight:'700'},
 })

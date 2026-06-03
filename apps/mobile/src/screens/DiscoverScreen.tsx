@@ -8,7 +8,7 @@ const[users,setUsers]=useState<User[]>([])
 const[loading,setLoading]=useState(true)
 const[currentUserId,setCurrentUserId]=useState<string|null>(null)
 const[currentLocation,setCurrentLocation]=useState<string|null>(null)
-const[filter,setFilter]=useState<'nearby'|'global'>('global')
+const[filter,setFilter]=useState<'nearby'|'global'|'favorites'>('global')
 const[favorites,setFavorites]=useState<Set<string>>(new Set())
 useEffect(()=>{loadUsers()},[filter])
 const loadUsers=async()=>{
@@ -19,9 +19,17 @@ setCurrentUserId(user.id)
 const{data:myProfile}=await supabase.from('users').select('location').eq('id',user.id).single()
 setCurrentLocation(myProfile?.location||null)
 const{data:favData}=await supabase.from('favorites').select('favorited_id').eq('user_id',user.id)
-if(favData)setFavorites(new Set(favData.map((f:any)=>f.favorited_id)))
+const favIds=favData?favData.map((f:any)=>f.favorited_id):[]
+if(favData)setFavorites(new Set(favIds))
 const{data:blockData}=await supabase.from('blocks').select('blocked_id').eq('blocker_id',user.id)
 const blockedIds=blockData?blockData.map((b:any)=>b.blocked_id):[]
+if(filter==='favorites'){
+if(favIds.length===0){setUsers([]);setLoading(false);return}
+const{data,error}=await supabase.from('users').select('id,username,display_name,bio,age,avatar_url,location').in('id',favIds)
+if(!error)setUsers((data||[]).filter((u:User)=>!blockedIds.includes(u.id)))
+setLoading(false)
+return
+}
 let query=supabase.from('users').select('id,username,display_name,bio,age,avatar_url,location').neq('id',user.id).eq('is_active',true).limit(50)
 if(filter==='nearby'&&myProfile?.location){query=query.ilike('location',`%${myProfile.location.split(',')[0].trim()}%`)}
 const{data,error}=await query
@@ -39,13 +47,14 @@ const isFav=favorites.has(favId)
 if(isFav){
 await supabase.from('favorites').delete().eq('user_id',currentUserId).eq('favorited_id',favId)
 setFavorites(prev=>{const n=new Set(prev);n.delete(favId);return n})
+if(filter==='favorites')setUsers(prev=>prev.filter(u=>u.id!==favId))
 }else{
 await supabase.from('favorites').insert({user_id:currentUserId,favorited_id:favId})
 setFavorites(prev=>new Set([...prev,favId]))
 }
 }
 const handleBlock=async(blockedId:string,name:string)=>{
-Alert.alert('Block User',`Are you sure you want to block ${name}? They will no longer appear in your discover feed.`,[
+Alert.alert('Block User',`Are you sure you want to block ${name}?`,[
 {text:'Cancel',style:'cancel'},
 {text:'Block',style:'destructive',onPress:async()=>{
 await supabase.from('blocks').insert({blocker_id:currentUserId,blocked_id:blockedId})
@@ -63,10 +72,16 @@ return(
 <TouchableOpacity style={[s.filterTab,filter==='global'&&s.filterTabActive]} onPress={()=>setFilter('global')}>
 <Text style={[s.filterText,filter==='global'&&s.filterTextActive]}>🌍 Global</Text>
 </TouchableOpacity>
+<TouchableOpacity style={[s.filterTab,filter==='favorites'&&s.filterTabActive]} onPress={()=>setFilter('favorites')}>
+<Text style={[s.filterText,filter==='favorites'&&s.filterTextActive]}>★ Saved</Text>
+</TouchableOpacity>
 </View>
 {filter==='nearby'&&!currentLocation&&<View style={s.banner}><Text style={s.bannerText}>Add your location in Profile to see nearby people</Text></View>}
 {loading?<View style={s.center}><Text style={s.loadingText}>Finding people...</Text></View>
-:users.length===0?<View style={s.center}><Text style={s.loadingText}>{filter==='nearby'?'No one nearby yet':'No one here yet'}</Text><Text style={s.subText}>{filter==='nearby'?'Try switching to Global':'Check back soon!'}</Text></View>
+:users.length===0?<View style={s.center}>
+<Text style={s.loadingText}>{filter==='favorites'?'No saved profiles yet':filter==='nearby'?'No one nearby yet':'No one here yet'}</Text>
+<Text style={s.subText}>{filter==='favorites'?'Star profiles to save them here':filter==='nearby'?'Try switching to Global':'Check back soon!'}</Text>
+</View>
 :<FlatList data={users} keyExtractor={i=>i.id} contentContainerStyle={s.list} renderItem={({item})=>(
 <View style={s.card}>
 <View style={s.cardLeft}>
@@ -99,7 +114,7 @@ container:{flex:1,backgroundColor:'#E8D5C0'},
 filterRow:{flexDirection:'row',marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(255,255,255,0.4)',borderRadius:12,padding:4},
 filterTab:{flex:1,paddingVertical:8,alignItems:'center',borderRadius:10},
 filterTabActive:{backgroundColor:'#2196F3'},
-filterText:{fontSize:14,color:'#556677',fontWeight:'500'},
+filterText:{fontSize:12,color:'#556677',fontWeight:'500'},
 filterTextActive:{color:'#ffffff',fontWeight:'700'},
 banner:{marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(241,90,34,0.1)',borderRadius:10,padding:12,borderWidth:1,borderColor:'rgba(241,90,34,0.3)'},
 bannerText:{color:'#F15A22',fontSize:13,textAlign:'center'},
