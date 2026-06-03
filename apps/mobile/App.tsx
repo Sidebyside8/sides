@@ -8,9 +8,10 @@ import ProfileSetupScreen from'./src/screens/ProfileSetupScreen'
 import DiscoverScreen from'./src/screens/DiscoverScreen'
 import MatchesScreen from'./src/screens/MatchesScreen'
 import MessagesScreen from'./src/screens/MessagesScreen'
+import MessagesListScreen from'./src/screens/MessagesListScreen'
 import CommunityScreen from'./src/screens/CommunityScreen'
 import ProfileScreen from'./src/screens/ProfileScreen'
-type Tab='discover'|'matches'|'community'|'profile'
+type Tab='discover'|'matches'|'messages'|'community'|'profile'
 export default function App(){
 const[session,setSession]=useState<Session|null>(null)
 const[initialized,setInitialized]=useState(false)
@@ -53,6 +54,7 @@ return(
 <View style={s.content}>
 {activeTab==='discover'&&<DiscoverScreen/>}
 {activeTab==='matches'&&<MatchesScreen onSelectMatch={(matchId,otherUser)=>setActiveMatch({matchId,otherUser})}/>}
+{activeTab==='messages'&&<MessagesListScreen onSelectMatch={(matchId,otherUser)=>{setActiveMatch({matchId,otherUser})}}/>}
 {activeTab==='community'&&<CommunityScreen/>}
 {activeTab==='profile'&&<ProfileScreen/>}
 </View>
@@ -62,6 +64,9 @@ return(
 </TouchableOpacity>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('matches')}>
 <Text style={[s.tabText,activeTab==='matches'&&s.tabActive]}>Matches</Text>
+</TouchableOpacity>
+<TouchableOpacity style={s.tab} onPress={()=>setActiveTab('messages')}>
+<Text style={[s.tabText,activeTab==='messages'&&s.tabActive]}>Messages</Text>
 </TouchableOpacity>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('community')}>
 <Text style={[s.tabText,activeTab==='community'&&s.tabActive]}>Community</Text>
@@ -78,6 +83,6 @@ container:{flex:1,backgroundColor:'#E8D5C0'},
 content:{flex:1},
 tabBar:{flexDirection:'row',backgroundColor:'rgba(232,196,160,0.95)',borderTopWidth:1,borderTopColor:'rgba(200,160,120,0.5)',paddingBottom:24,paddingTop:12},
 tab:{flex:1,alignItems:'center'},
-tabText:{color:'#8899AA',fontSize:12,fontWeight:'500'},
+tabText:{color:'#8899AA',fontSize:10,fontWeight:'500'},
 tabActive:{color:'#2196F3',fontWeight:'700'},
 })
