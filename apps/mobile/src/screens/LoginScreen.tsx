@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   buttonDisabled: { backgroundColor: '#aabbcc' },
   buttonText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
   secondaryButton: { width: '100%', padding: 16, alignItems: 'center', marginTop: 8 },
-  secondaryButtonText: { color: '#F15A22', fontSize: 16, fontWeight: '600' },
+  secondaryButtonText: { color: '#FF8C00', fontSize: 16, fontWeight: '600' },
   modalContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   modalLogo: { width: 100, height: 100, marginBottom: 24 },
   modalTitle: { fontSize: 26, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },

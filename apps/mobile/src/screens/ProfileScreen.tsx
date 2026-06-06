@@ -201,8 +201,8 @@ cancelButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:1
 cancelButtonText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
 blockedButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(0,0,0,0.15)'},
 blockedButtonText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
-signOutButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,borderWidth:1,borderColor:'#F15A22'},
-signOutText:{color:'#F15A22',fontSize:16,fontWeight:'600'},
+signOutButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,borderWidth:1,borderColor:'#FF6B00'},
+signOutText:{color:'#FF8C00',fontSize:16,fontWeight:'600'},
 loading:{flex:1,backgroundColor:'transparent',alignItems:'center',justifyContent:'center'},
 loadingText:{color:'rgba(255,255,255,0.7)',fontSize:16},
 })

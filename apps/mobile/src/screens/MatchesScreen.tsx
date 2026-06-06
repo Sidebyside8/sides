@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
   info: { flex: 1 },
   name: { color: '#ffffff', fontSize: 16, fontWeight: '600', marginBottom: 2 },
   username: { color: '#556677', fontSize: 13, marginBottom: 2 },
-  tap: { color: '#F15A22', fontSize: 12 },
+  tap: { color: '#FF8C00', fontSize: 12 },
   arrow: { color: '#556677', fontSize: 24 },
   loadingText: { color: '#ffffff', fontSize: 18, fontWeight: '600' },
   subText: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 8 },
