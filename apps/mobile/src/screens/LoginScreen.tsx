@@ -167,7 +167,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   inner: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   logo: { width: 160, height: 160, marginBottom: 12 },
-  tagline: { fontSize: 16, color: '#1a3a5a', marginBottom: 40, fontWeight: '500' },
+  tagline: { fontSize: 16, color: '#ffffff', marginBottom: 40, fontWeight: '500' },
   error: { color: '#cc2200', marginBottom: 12, fontSize: 14, textAlign: 'center' },
   input: {
     width: '100%', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 12,
