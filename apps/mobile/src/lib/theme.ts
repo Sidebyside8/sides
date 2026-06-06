@@ -1,5 +1,5 @@
 export const GRADIENT={
-colors:['#1B6CA8','#C85212'] as [string,string],
+colors:['#0A4A7A','#9A3A08'] as [string,string],
 start:{x:0,y:0},
 end:{x:1,y:1},
 }
