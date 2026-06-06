@@ -54,7 +54,7 @@ export default function TermsScreen({ onAccept, onDecline }: { onAccept: () => v
 
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 60, paddingHorizontal: 24, paddingBottom: 24 },
-  title: { fontSize: 26, fontWeight: 'bold', color: '#1a2a3a', marginBottom: 8 },
+  title: { fontSize: 26, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
   subtitle: { fontSize: 14, color: '#556677', marginBottom: 16 },
   scrollBox: {
     flex: 1, backgroundColor: 'rgba(255,255,255,0.6)',
@@ -62,8 +62,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   scrollContent: { padding: 16 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: '#1a2a3a', marginTop: 16, marginBottom: 6 },
-  body: { fontSize: 13, color: '#334455', lineHeight: 20 },
+  sectionTitle: { fontSize: 14, fontWeight: '700', color: '#ffffff', marginTop: 16, marginBottom: 6 },
+  body: { fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 20 },
   buttons: { gap: 10 },
   acceptButton: {
     backgroundColor: '#2196F3', borderRadius: 12,

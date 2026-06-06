@@ -3,6 +3,7 @@ import{View,Text,TouchableOpacity,StyleSheet}from'react-native'
 import{LinearGradient}from'expo-linear-gradient'
 import{Session}from'@supabase/supabase-js'
 import{supabase}from'./src/lib/supabase'
+import{GRADIENT,COLORS}from'./src/lib/theme'
 import LoginScreen from'./src/screens/LoginScreen'
 import ProfileSetupScreen from'./src/screens/ProfileSetupScreen'
 import DiscoverScreen from'./src/screens/DiscoverScreen'
@@ -42,19 +43,19 @@ setHasProfile(!!data)
 setInitialized(true)
 }
 if(!initialized||hasProfile===null)return(
-<LinearGradient colors={['#B8D4E8','#E8C4A0']} start={{x:0,y:0}} end={{x:1,y:1}} style={{flex:1,alignItems:'center',justifyContent:'center'}}>
-<Text style={{color:'#1a3a5a',fontSize:18}}>Loading...</Text>
+<LinearGradient colors={GRADIENT.colors} start={GRADIENT.start} end={GRADIENT.end} style={{flex:1,alignItems:'center',justifyContent:'center'}}>
+<Text style={{color:'#ffffff',fontSize:18,fontWeight:'600'}}>Loading...</Text>
 </LinearGradient>
 )
 if(!session)return<LoginScreen/>
 if(!hasProfile)return<ProfileSetupScreen onComplete={()=>setHasProfile(true)}/>
 if(activeMatch)return<MessagesScreen matchId={activeMatch.matchId} otherUser={activeMatch.otherUser} onBack={()=>setActiveMatch(null)}/>
 return(
-<View style={s.container}>
+<LinearGradient colors={GRADIENT.colors} start={GRADIENT.start} end={GRADIENT.end} style={s.container}>
 <View style={s.content}>
 {activeTab==='discover'&&<DiscoverScreen/>}
 {activeTab==='matches'&&<MatchesScreen onSelectMatch={(matchId,otherUser)=>setActiveMatch({matchId,otherUser})}/>}
-{activeTab==='messages'&&<MessagesListScreen onSelectMatch={(matchId,otherUser)=>{setActiveMatch({matchId,otherUser})}}/>}
+{activeTab==='messages'&&<MessagesListScreen onSelectMatch={(matchId,otherUser)=>setActiveMatch({matchId,otherUser})}/>}
 {activeTab==='community'&&<CommunityScreen/>}
 {activeTab==='profile'&&<ProfileScreen/>}
 </View>
@@ -75,14 +76,14 @@ return(
 <Text style={[s.tabText,activeTab==='profile'&&s.tabActive]}>Profile</Text>
 </TouchableOpacity>
 </View>
-</View>
+</LinearGradient>
 )
 }
 const s=StyleSheet.create({
-container:{flex:1,backgroundColor:'#E8D5C0'},
+container:{flex:1},
 content:{flex:1},
-tabBar:{flexDirection:'row',backgroundColor:'rgba(232,196,160,0.95)',borderTopWidth:1,borderTopColor:'rgba(200,160,120,0.5)',paddingBottom:24,paddingTop:12},
+tabBar:{flexDirection:'row',backgroundColor:COLORS.tabBar,borderTopWidth:1,borderTopColor:COLORS.tabBarBorder,paddingBottom:24,paddingTop:12},
 tab:{flex:1,alignItems:'center'},
-tabText:{color:'#8899AA',fontSize:10,fontWeight:'500'},
-tabActive:{color:'#2196F3',fontWeight:'700'},
+tabText:{color:COLORS.tabInactive,fontSize:10,fontWeight:'500'},
+tabActive:{color:COLORS.tabActive,fontWeight:'700'},
 })

@@ -76,7 +76,7 @@ export default function LoginScreen() {
         <LinearGradient colors={['#B8D4E8', '#E8C4A0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.inner}>
-              <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+              <Image source={require('../../assets/logo2.png')} style={styles.logo} resizeMode="contain" />
               <Text style={styles.tagline}>Find your people</Text>
               {error ? <Text style={styles.error}>{error}</Text> : null}
               <TextInput
@@ -115,7 +115,7 @@ export default function LoginScreen() {
           <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
               <View style={styles.modalContainer}>
-                <Image source={require('../../assets/logo.png')} style={styles.modalLogo} resizeMode="contain" />
+                <Image source={require('../../assets/logo2.png')} style={styles.modalLogo} resizeMode="contain" />
                 <Text style={styles.modalTitle}>Age Verification</Text>
                 <Text style={styles.modalSubtitle}>You must be 18 or older to use Syde</Text>
 
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   error: { color: '#cc2200', marginBottom: 12, fontSize: 14, textAlign: 'center' },
   input: {
     width: '100%', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 12,
-    padding: 16, color: '#1a2a3a', fontSize: 16, marginBottom: 12,
+    padding: 16, color: '#ffffff', fontSize: 16, marginBottom: 12,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
   },
   button: { width: '100%', backgroundColor: '#2196F3', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
@@ -181,12 +181,12 @@ const styles = StyleSheet.create({
   secondaryButtonText: { color: '#F15A22', fontSize: 16, fontWeight: '600' },
   modalContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   modalLogo: { width: 100, height: 100, marginBottom: 24 },
-  modalTitle: { fontSize: 26, fontWeight: 'bold', color: '#1a2a3a', marginBottom: 8 },
+  modalTitle: { fontSize: 26, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
   modalSubtitle: { fontSize: 15, color: '#556677', marginBottom: 32, textAlign: 'center' },
   dobLabel: { fontSize: 14, color: '#445566', fontWeight: '600', marginBottom: 8, alignSelf: 'flex-start', width: '100%' },
   dobInput: {
     width: '100%', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 12,
-    padding: 16, color: '#1a2a3a', fontSize: 18, marginBottom: 24,
+    padding: 16, color: '#ffffff', fontSize: 18, marginBottom: 24,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', textAlign: 'center', letterSpacing: 2,
   },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', width: '100%', marginBottom: 24 },
@@ -197,5 +197,5 @@ const styles = StyleSheet.create({
   },
   checkboxChecked: { backgroundColor: '#2196F3' },
   checkmark: { color: '#ffffff', fontSize: 14, fontWeight: 'bold' },
-  checkboxLabel: { flex: 1, fontSize: 14, color: '#1a2a3a', lineHeight: 20 },
+  checkboxLabel: { flex: 1, fontSize: 14, color: '#ffffff', lineHeight: 20 },
 })

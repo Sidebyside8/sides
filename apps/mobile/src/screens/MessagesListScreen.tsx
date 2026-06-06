@@ -63,19 +63,19 @@ return(
 )
 }
 const s=StyleSheet.create({
-container:{flex:1,backgroundColor:'#E8D5C0'},
+container:{flex:1,backgroundColor:'transparent'},
 center:{flex:1,alignItems:'center',justifyContent:'center'},
 list:{paddingHorizontal:16,paddingBottom:24},
-card:{backgroundColor:'rgba(255,255,255,0.6)',borderRadius:16,padding:16,marginBottom:8,flexDirection:'row',alignItems:'center',borderWidth:1,borderColor:'rgba(255,255,255,0.8)'},
+card:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:16,padding:16,marginBottom:8,flexDirection:'row',alignItems:'center',borderWidth:1,borderColor:'rgba(255,255,255,0.25)'},
 avatarContainer:{marginRight:12},
 avatar:{width:56,height:56,borderRadius:28},
 avatarPlaceholder:{width:56,height:56,borderRadius:28,backgroundColor:'#2196F3',alignItems:'center',justifyContent:'center'},
 avatarText:{color:'#ffffff',fontSize:22,fontWeight:'bold'},
 info:{flex:1},
 nameRow:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:4},
-name:{color:'#1a2a3a',fontSize:16,fontWeight:'600'},
+name:{color:'#ffffff',fontSize:16,fontWeight:'600'},
 time:{color:'#888',fontSize:12},
-lastMessage:{color:'#556677',fontSize:14},
-loadingText:{color:'#1a2a3a',fontSize:18,fontWeight:'600'},
-subText:{color:'#556677',fontSize:14,marginTop:8},
+lastMessage:{color:'rgba(255,255,255,0.7)',fontSize:14},
+loadingText:{color:'#ffffff',fontSize:18,fontWeight:'600'},
+subText:{color:'rgba(255,255,255,0.7)',fontSize:14,marginTop:8},
 })

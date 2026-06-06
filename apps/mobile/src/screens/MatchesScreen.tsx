@@ -87,7 +87,7 @@ export default function MatchesScreen({ onSelectMatch }: { onSelectMatch: (match
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#E8D5C0' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   list: { paddingHorizontal: 16, paddingBottom: 24 },
   card: {
@@ -99,10 +99,10 @@ const styles = StyleSheet.create({
   avatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#2196F3', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   avatarText: { color: '#ffffff', fontSize: 22, fontWeight: 'bold' },
   info: { flex: 1 },
-  name: { color: '#1a2a3a', fontSize: 16, fontWeight: '600', marginBottom: 2 },
+  name: { color: '#ffffff', fontSize: 16, fontWeight: '600', marginBottom: 2 },
   username: { color: '#556677', fontSize: 13, marginBottom: 2 },
   tap: { color: '#F15A22', fontSize: 12 },
   arrow: { color: '#556677', fontSize: 24 },
-  loadingText: { color: '#1a2a3a', fontSize: 18, fontWeight: '600' },
-  subText: { color: '#556677', fontSize: 14, marginTop: 8 },
+  loadingText: { color: '#ffffff', fontSize: 18, fontWeight: '600' },
+  subText: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 8 },
 })

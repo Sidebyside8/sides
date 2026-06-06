@@ -119,7 +119,7 @@ export default function MessagesScreen({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#E8D5C0' },
+  container: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingTop: 60, paddingHorizontal: 16, paddingBottom: 16,
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   headerAvatar: { width: 36, height: 36, borderRadius: 18, marginRight: 10 },
   headerAvatarPlaceholder: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#2196F3', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   headerAvatarText: { color: '#fff', fontWeight: 'bold' },
-  headerName: { color: '#1a2a3a', fontSize: 16, fontWeight: '600' },
+  headerName: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
   headerUsername: { color: '#556677', fontSize: 13 },
   messageList: { padding: 16, flexGrow: 1 },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 60 },
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   theirBubble: { backgroundColor: 'rgba(255,255,255,0.7)', alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
   messageText: { fontSize: 15 },
   myText: { color: '#ffffff' },
-  theirText: { color: '#1a2a3a' },
+  theirText: { color: '#ffffff' },
   inputRow: {
     flexDirection: 'row', padding: 12,
     borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.1)',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1, backgroundColor: 'rgba(255,255,255,0.8)', borderRadius: 20,
     paddingHorizontal: 16, paddingVertical: 10,
-    color: '#1a2a3a', fontSize: 15, maxHeight: 100,
+    color: '#ffffff', fontSize: 15, maxHeight: 100,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)', marginRight: 8,
   },
   sendButton: { backgroundColor: '#2196F3', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 },

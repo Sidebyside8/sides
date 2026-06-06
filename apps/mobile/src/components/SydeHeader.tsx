@@ -9,7 +9,7 @@ export default function SydeHeader({ title, rightAction }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.left}>
-        <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+        <Image source={require('../../assets/logo2.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>{title}</Text>
       </View>
       {rightAction ? <View style={styles.right}>{rightAction}</View> : null}
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1a2a3a',
+    color: '#ffffff',
   },
   right: {
     alignItems: 'flex-end',

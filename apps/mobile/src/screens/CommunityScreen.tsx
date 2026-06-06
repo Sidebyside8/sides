@@ -102,7 +102,7 @@ return(
 {tab==='posts'?(
 <>
 <View style={s.postBox}>
-<TextInput style={s.postInput} placeholder="Share something with the community..." placeholderTextColor="#888" value={newPost} onChangeText={setNewPost} multiline/>
+<TextInput style={s.postInput} placeholder="Share something with the community..." placeholderTextColor='rgba(255,255,255,0.9)' value={newPost} onChangeText={setNewPost} multiline/>
 <TouchableOpacity style={[s.postButton,(!newPost.trim()||posting)&&s.postButtonDisabled]} onPress={handlePost} disabled={!newPost.trim()||posting}>
 <Text style={s.postButtonText}>{posting?'Posting...':'Post'}</Text>
 </TouchableOpacity>
@@ -155,13 +155,13 @@ renderItem={({item})=>(
 </View>
 <ScrollView contentContainerStyle={s.modalContent}>
 <Text style={s.inputLabel}>Event Title *</Text>
-<TextInput style={s.input} placeholder="e.g. Syde Meetup NYC" placeholderTextColor="#888" value={eventTitle} onChangeText={setEventTitle}/>
+<TextInput style={s.input} placeholder="e.g. Syde Meetup NYC" placeholderTextColor='rgba(255,255,255,0.9)' value={eventTitle} onChangeText={setEventTitle}/>
 <Text style={s.inputLabel}>Date & Time * (YYYY-MM-DD HH:MM)</Text>
-<TextInput style={s.input} placeholder="e.g. 2025-12-25 18:00" placeholderTextColor="#888" value={eventDate} onChangeText={setEventDate}/>
+<TextInput style={s.input} placeholder="e.g. 2025-12-25 18:00" placeholderTextColor='rgba(255,255,255,0.9)' value={eventDate} onChangeText={setEventDate}/>
 <Text style={s.inputLabel}>Location</Text>
-<TextInput style={s.input} placeholder="e.g. New York, NY" placeholderTextColor="#888" value={eventLocation} onChangeText={setEventLocation}/>
+<TextInput style={s.input} placeholder="e.g. New York, NY" placeholderTextColor='rgba(255,255,255,0.9)' value={eventLocation} onChangeText={setEventLocation}/>
 <Text style={s.inputLabel}>Description</Text>
-<TextInput style={[s.input,s.descInput]} placeholder="Tell people about your event..." placeholderTextColor="#888" value={eventDesc} onChangeText={setEventDesc} multiline/>
+<TextInput style={[s.input,s.descInput]} placeholder="Tell people about your event..." placeholderTextColor='rgba(255,255,255,0.9)' value={eventDesc} onChangeText={setEventDesc} multiline/>
 <TouchableOpacity style={[s.postButton,posting&&s.postButtonDisabled]} onPress={handleCreateEvent} disabled={posting}>
 <Text style={s.postButtonText}>{posting?'Creating...':'Create Event'}</Text>
 </TouchableOpacity>
@@ -173,46 +173,46 @@ renderItem={({item})=>(
 )
 }
 const s=StyleSheet.create({
-container:{flex:1,backgroundColor:'#E8D5C0'},
+container:{flex:1,backgroundColor:'transparent'},
 tabRow:{flexDirection:'row',marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(255,255,255,0.4)',borderRadius:12,padding:4},
 tabBtn:{flex:1,paddingVertical:8,alignItems:'center',borderRadius:10},
 tabBtnActive:{backgroundColor:'#2196F3'},
-tabBtnText:{fontSize:14,color:'#556677',fontWeight:'500'},
+tabBtnText:{fontSize:14,color:'rgba(255,255,255,0.7)',fontWeight:'500'},
 tabBtnTextActive:{color:'#ffffff',fontWeight:'700'},
-postBox:{marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(255,255,255,0.6)',borderRadius:16,padding:16,borderWidth:1,borderColor:'rgba(255,255,255,0.8)'},
-postInput:{color:'#1a2a3a',fontSize:15,minHeight:60,textAlignVertical:'top',marginBottom:12},
+postBox:{marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(255,255,255,0.15)',borderRadius:16,padding:16,borderWidth:1,borderColor:'rgba(255,255,255,0.25)'},
+postInput:{color:'#ffffff',fontSize:15,minHeight:60,textAlignVertical:'top',marginBottom:12},
 postButton:{backgroundColor:'#2196F3',borderRadius:10,padding:10,alignItems:'center',alignSelf:'flex-end',paddingHorizontal:20},
 postButtonDisabled:{backgroundColor:'#aabbcc'},
 postButtonText:{color:'#ffffff',fontWeight:'600',fontSize:14},
 createEventButton:{marginHorizontal:16,marginBottom:12,backgroundColor:'#2196F3',borderRadius:12,padding:14,alignItems:'center'},
 createEventText:{color:'#ffffff',fontWeight:'700',fontSize:15},
 list:{paddingHorizontal:16,paddingBottom:24},
-card:{backgroundColor:'rgba(255,255,255,0.6)',borderRadius:16,padding:16,marginBottom:12,borderWidth:1,borderColor:'rgba(255,255,255,0.8)'},
+card:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:16,padding:16,marginBottom:12,borderWidth:1,borderColor:'rgba(255,255,255,0.25)'},
 cardHeader:{flexDirection:'row',alignItems:'center',marginBottom:10},
 avatar:{width:40,height:40,borderRadius:20,backgroundColor:'#2196F3',alignItems:'center',justifyContent:'center',marginRight:10},
 avatarText:{color:'#ffffff',fontSize:16,fontWeight:'bold'},
 authorInfo:{flex:1},
-authorName:{color:'#1a2a3a',fontWeight:'600',fontSize:14},
-authorMeta:{color:'#556677',fontSize:12},
-content:{color:'#1a2a3a',fontSize:15,lineHeight:22},
-eventCard:{backgroundColor:'rgba(255,255,255,0.6)',borderRadius:16,padding:16,marginBottom:12,borderWidth:1,borderColor:'rgba(255,255,255,0.8)'},
+authorName:{color:'#ffffff',fontWeight:'600',fontSize:14},
+authorMeta:{color:'rgba(255,255,255,0.7)',fontSize:12},
+content:{color:'#ffffff',fontSize:15,lineHeight:22},
+eventCard:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:16,padding:16,marginBottom:12,borderWidth:1,borderColor:'rgba(255,255,255,0.25)'},
 eventHeader:{marginBottom:8},
-eventTitle:{color:'#1a2a3a',fontSize:17,fontWeight:'700',marginBottom:4},
+eventTitle:{color:'#ffffff',fontSize:17,fontWeight:'700',marginBottom:4},
 eventDate:{color:'#2196F3',fontSize:13,marginBottom:2},
-eventLocation:{color:'#556677',fontSize:13,marginBottom:2},
+eventLocation:{color:'rgba(255,255,255,0.7)',fontSize:13,marginBottom:2},
 eventDesc:{color:'#334455',fontSize:14,lineHeight:20,marginBottom:8},
 eventAuthor:{color:'#888',fontSize:12},
 center:{flex:1,alignItems:'center',justifyContent:'center'},
-loadingText:{color:'#556677',fontSize:16},
+loadingText:{color:'rgba(255,255,255,0.7)',fontSize:16},
 empty:{alignItems:'center',paddingTop:60},
-emptyText:{color:'#1a2a3a',fontSize:18,fontWeight:'600'},
-emptySubText:{color:'#556677',fontSize:14,marginTop:8},
-modalContainer:{flex:1,backgroundColor:'#E8D5C0'},
+emptyText:{color:'#ffffff',fontSize:18,fontWeight:'600'},
+emptySubText:{color:'rgba(255,255,255,0.7)',fontSize:14,marginTop:8},
+modalContainer:{flex:1,backgroundColor:'transparent'},
 modalHeader:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingTop:60,paddingHorizontal:24,paddingBottom:16,borderBottomWidth:1,borderBottomColor:'rgba(0,0,0,0.1)'},
-modalTitle:{fontSize:22,fontWeight:'700',color:'#1a2a3a'},
-modalClose:{fontSize:20,color:'#556677'},
+modalTitle:{fontSize:22,fontWeight:'700',color:'#ffffff'},
+modalClose:{fontSize:20,color:'rgba(255,255,255,0.7)'},
 modalContent:{padding:24},
-inputLabel:{fontSize:13,color:'#445566',fontWeight:'600',marginBottom:6},
-input:{backgroundColor:'rgba(255,255,255,0.7)',borderRadius:12,padding:14,color:'#1a2a3a',fontSize:15,marginBottom:16,borderWidth:1,borderColor:'rgba(255,255,255,0.9)'},
+inputLabel:{fontSize:13,color:'rgba(255,255,255,0.8)',fontWeight:'600',marginBottom:6},
+input:{backgroundColor:'rgba(255,255,255,0.7)',borderRadius:12,padding:14,color:'#ffffff',fontSize:15,marginBottom:16,borderWidth:1,borderColor:'rgba(255,255,255,0.9)'},
 descInput:{height:100,textAlignVertical:'top'},
 })

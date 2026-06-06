@@ -93,12 +93,12 @@ export default function ProfileSetupScreen({ onComplete }: { onComplete: () => v
 
 const styles = StyleSheet.create({
   content: { padding: 24, paddingTop: 80, paddingBottom: 40 },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#1a2a3a', marginBottom: 8 },
+  title: { fontSize: 32, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
   subtitle: { fontSize: 16, color: '#556677', marginBottom: 32 },
   label: { fontSize: 14, color: '#445566', marginBottom: 8, fontWeight: '600' },
   input: {
     backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 12,
-    padding: 16, color: '#1a2a3a', fontSize: 16, marginBottom: 20,
+    padding: 16, color: '#ffffff', fontSize: 16, marginBottom: 20,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
   },
   bioInput: { height: 100, textAlignVertical: 'top' },
