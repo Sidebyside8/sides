@@ -1,6 +1,7 @@
 import{useEffect,useState}from'react'
 import{View,Text,TouchableOpacity,StyleSheet,ScrollView,Alert,Image,TextInput}from'react-native'
 import{supabase}from'../lib/supabase'
+import*as ImagePicker from'expo-image-picker'
 import SydeHeader from'../components/SydeHeader'
 import BlockedUsersScreen from'./BlockedUsersScreen'
 
@@ -32,6 +33,7 @@ const[editing,setEditing]=useState(false)
 const[editData,setEditData]=useState<Partial<Profile>>({})
 const[saving,setSaving]=useState(false)
 const[showBlocked,setShowBlocked]=useState(false)
+const[uploadingPhoto,setUploadingPhoto]=useState(false)
 
 useEffect(()=>{loadProfile()},[])
 
@@ -49,6 +51,29 @@ setStats({likes:likesRes.count||0,matches:matchesRes.count||0,posts:postsRes.cou
 setLoading(false)
 }
 
+const handlePickPhoto=async()=>{
+const perm=await ImagePicker.requestMediaLibraryPermissionsAsync()
+if(perm.granted===false){Alert.alert("Permission needed","Please allow photo access");return}
+const result=await ImagePicker.launchImageLibraryAsync({mediaTypes:ImagePicker.MediaTypeOptions.Images,allowsEditing:true,aspect:[1,1],quality:0.7})
+if(result.canceled)return
+setUploadingPhoto(true)
+try{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+const uri=result.assets[0].uri
+const response=await fetch(uri)
+const blob=await response.blob()
+const ab=await new Response(blob).arrayBuffer()
+const fileName=user.id+"-"+Date.now()+".jpg"
+const{error:ue}=await supabase.storage.from("avatars").upload(fileName,ab,{contentType:"image/jpeg",upsert:true})
+if(ue){Alert.alert("Upload failed",ue.message);setUploadingPhoto(false);return}
+const{data:ud}=supabase.storage.from("avatars").getPublicUrl(fileName)
+await supabase.from("users").update({avatar_url:ud.publicUrl}).eq("id",user.id)
+setProfile(prev=>prev?{...prev,avatar_url:ud.publicUrl}:prev)
+Alert.alert("Photo updated!","Profile photo updated")
+}catch(e){}
+setUploadingPhoto(false)
+}
 const handleSave=async()=>{
 setSaving(true)
 const{data:{user}}=await supabase.auth.getUser()
@@ -93,9 +118,12 @@ return(
 <SydeHeader title="Profile" rightAction={editButton}/>
 
 <View style={s.avatarContainer}>
+<TouchableOpacity onPress={handlePickPhoto} disabled={uploadingPhoto}>
 <View style={s.avatar}>
 {profile?.avatar_url?<Image source={{uri:profile.avatar_url}} style={s.avatarImage}/>:<Text style={s.avatarText}>{profile?.display_name?.[0]||'?'}</Text>}
 </View>
+<View style={s.cameraButton}><Text style={s.cameraIcon}>{uploadingPhoto?"⏳":"📷"}</Text></View>
+</TouchableOpacity>
 {editing?<TextInput style={s.editNameInput} value={editData.display_name} onChangeText={v=>setEditData(prev=>({...prev,display_name:v}))} placeholder="Display name" placeholderTextColor="#888"/>
 :<Text style={s.displayName}>{profile?.display_name}</Text>}
 <Text style={s.username}>@{profile?.username}</Text>
@@ -175,6 +203,8 @@ avatarContainer:{alignItems:'center',marginBottom:24,paddingHorizontal:24},
 avatar:{width:100,height:100,borderRadius:50,backgroundColor:'#2196F3',alignItems:'center',justifyContent:'center',marginBottom:12},
 avatarImage:{width:100,height:100,borderRadius:50},
 avatarText:{color:'#ffffff',fontSize:40,fontWeight:'bold'},
+cameraButton:{position:'absolute',bottom:0,right:0,backgroundColor:'rgba(0,0,0,0.6)',borderRadius:15,width:30,height:30,alignItems:'center',justifyContent:'center'},
+cameraIcon:{fontSize:14},
 editNameInput:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:10,padding:10,color:'#ffffff',fontSize:20,fontWeight:'700',textAlign:'center',borderWidth:1,borderColor:'rgba(255,255,255,0.25)',marginBottom:4,width:'80%'},
 displayName:{color:'#ffffff',fontSize:22,fontWeight:'700',marginBottom:4},
 username:{color:'rgba(255,255,255,0.7)',fontSize:15},
