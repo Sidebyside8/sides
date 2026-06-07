@@ -16,7 +16,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.sidebyside8.syde",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSUserNotificationUsageDescription": "Syde Vibe uses notifications to alert you about new matches and messages."
       }
     },
     "android": {
@@ -35,6 +36,16 @@
       "eas": {
         "projectId": "9c6c46b9-81e7-44b2-985e-9c2af69b05ae"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/logo2.png",
+          "color": "#1B6CA8",
+          "sounds": []
+        }
+      ]
+    ]
   }
 }

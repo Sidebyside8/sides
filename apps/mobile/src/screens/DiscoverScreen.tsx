@@ -1,6 +1,7 @@
 import{useEffect,useState}from'react'
 import{View,Text,TouchableOpacity,StyleSheet,FlatList,Alert,Image}from'react-native'
 import{supabase}from'../lib/supabase'
+import{notifyNewMatch}from'../lib/notifications'
 import SydeHeader from'../components/SydeHeader'
 type User={id:string;username:string;display_name:string;bio:string;age:number;avatar_url?:string;location?:string}
 export default function DiscoverScreen(){
@@ -40,7 +41,16 @@ setLoading(false)
 const handleLike=async(likedId:string)=>{
 const{error}=await supabase.from('likes').insert({liker_id:currentUserId,liked_id:likedId})
 if(error)Alert.alert('Error',error.message)
-else setUsers(prev=>prev.filter(u=>u.id!==likedId))
+else{
+setUsers(prev=>prev.filter(u=>u.id!==likedId))
+const{data:mutualLike}=await supabase.from('likes').select('id').eq('liker_id',likedId).eq('liked_id',currentUserId).single()
+if(mutualLike){
+const{data:{user}}=await supabase.auth.getUser()
+const{data:myProfile}=await supabase.from('users').select('display_name').eq('id',user.id).single()
+await supabase.from('matches').insert({user1_id:currentUserId,user2_id:likedId})
+await notifyNewMatch(likedId,myProfile?.display_name||'Someone')
+}
+}
 }
 const handleFavorite=async(favId:string)=>{
 const isFav=favorites.has(favId)

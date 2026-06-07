@@ -4,6 +4,7 @@ import{LinearGradient}from'expo-linear-gradient'
 import{Session}from'@supabase/supabase-js'
 import{supabase}from'./src/lib/supabase'
 import{GRADIENT,COLORS}from'./src/lib/theme'
+import{registerForPushNotifications,savePushToken}from'./src/lib/notifications'
 import LoginScreen from'./src/screens/LoginScreen'
 import ProfileSetupScreen from'./src/screens/ProfileSetupScreen'
 import DiscoverScreen from'./src/screens/DiscoverScreen'
@@ -38,7 +39,13 @@ if(profileChecked.current===userId)return
 profileChecked.current=userId
 try{
 const{data}=await supabase.from('users').select('id').eq('id',userId).maybeSingle()
-setHasProfile(!!data)
+const hasP=!!data
+setHasProfile(hasP)
+if(hasP){
+registerForPushNotifications().then(token=>{
+if(token)savePushToken(token)
+})
+}
 }catch(e){setHasProfile(false)}
 setInitialized(true)
 }
