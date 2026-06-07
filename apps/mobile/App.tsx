@@ -1,5 +1,5 @@
 import{useEffect,useState,useRef}from'react'
-import{View,Text,TouchableOpacity,StyleSheet}from'react-native'
+import{View,Text,TouchableOpacity,StyleSheet,Image}from'react-native'
 import{LinearGradient}from'expo-linear-gradient'
 import{Session}from'@supabase/supabase-js'
 import{supabase}from'./src/lib/supabase'
@@ -44,7 +44,8 @@ setInitialized(true)
 }
 if(!initialized||hasProfile===null)return(
 <LinearGradient colors={GRADIENT.colors} start={GRADIENT.start} end={GRADIENT.end} style={{flex:1,alignItems:'center',justifyContent:'center'}}>
-<Text style={{color:'#ffffff',fontSize:18,fontWeight:'600'}}>Loading...</Text>
+<Image source={require('./assets/logo2.png')} style={{width:140,height:140,marginBottom:24}} resizeMode="contain"/>
+<Text style={{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'500'}}>Loading...</Text>
 </LinearGradient>
 )
 if(!session)return<LoginScreen/>
