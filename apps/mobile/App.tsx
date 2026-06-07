@@ -28,7 +28,7 @@ else{setHasProfile(false);setInitialized(true)}
 })
 const{data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{
 setSession(session)
-if(session){if(profileChecked.current!==session.user.id){checkProfile(session.user.id)}}
+if(session){if(profileChecked.current!==session.user.id){setHasProfile(null);checkProfile(session.user.id)}}
 else{profileChecked.current=null;setHasProfile(false);setInitialized(true)}
 })
 return()=>subscription.unsubscribe()
