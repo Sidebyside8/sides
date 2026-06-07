@@ -25,7 +25,7 @@ const PREFERENCES=[
 type Profile={id:string;username:string;display_name:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[]}
 type Stats={likes:number;matches:number;posts:number}
 
-export default function ProfileScreen(){
+export default function ProfileScreen({onUpgrade,isPremium}:{onUpgrade?:()=>void;isPremium?:boolean}){
 const[profile,setProfile]=useState<Profile|null>(null)
 const[stats,setStats]=useState<Stats>({likes:0,matches:0,posts:0})
 const[loading,setLoading]=useState(true)
@@ -183,6 +183,9 @@ activeOpacity={editing?0.7:1}
 <Text style={s.cancelButtonText}>Cancel</Text>
 </TouchableOpacity>}
 
+{!isPremium&&<TouchableOpacity style={s.premiumButton} onPress={onUpgrade}>
+<Text style={s.premiumButtonText}>👑 Upgrade to Premium — $9.99/mo</Text>
+</TouchableOpacity>}
 <TouchableOpacity style={s.blockedButton} onPress={()=>setShowBlocked(true)}>
 <Text style={s.blockedButtonText}>🚫 Manage Blocked Users</Text>
 </TouchableOpacity>
@@ -229,6 +232,8 @@ prefText:{flex:1,fontSize:14,color:'rgba(255,255,255,0.7)'},
 prefTextSelected:{color:'#ffffff',fontWeight:'500'},
 cancelButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(0,0,0,0.1)'},
 cancelButtonText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
+premiumButton:{backgroundColor:'#F5A623',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12},
+premiumButtonText:{color:'#0A1628',fontSize:16,fontWeight:'700'},
 blockedButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(0,0,0,0.15)'},
 blockedButtonText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
 signOutButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,borderWidth:1,borderColor:'#FF6B00'},
