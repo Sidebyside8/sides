@@ -46,7 +46,7 @@ return(
 <Text style={s.closeBtnText}>✕</Text>
 </TouchableOpacity>
 
-<Text style={s.crown}>👑</Text>
+<Text style={s.crown}>💎</Text>
 <Text style={s.title}>Syde Vibe Premium</Text>
 <Text style={s.subtitle}>Unlock the full experience</Text>
 

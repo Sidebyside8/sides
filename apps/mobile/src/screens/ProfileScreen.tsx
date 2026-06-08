@@ -61,11 +61,10 @@ try{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
 const uri=result.assets[0].uri
-const response=await fetch(uri)
-const blob=await response.blob()
-const ab=await new Response(blob).arrayBuffer()
 const fileName=user.id+"-"+Date.now()+".jpg"
-const{error:ue}=await supabase.storage.from("avatars").upload(fileName,ab,{contentType:"image/jpeg",upsert:true})
+const formData=new FormData()
+formData.append("file",{uri,name:fileName,type:"image/jpeg"} as any)
+const{error:ue}=await supabase.storage.from("avatars").upload(fileName,formData,{contentType:"multipart/form-data",upsert:true})
 if(ue){Alert.alert("Upload failed",ue.message);setUploadingPhoto(false);return}
 const{data:ud}=supabase.storage.from("avatars").getPublicUrl(fileName)
 await supabase.from("users").update({avatar_url:ud.publicUrl}).eq("id",user.id)
