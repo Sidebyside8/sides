@@ -1,7 +1,7 @@
 import{useEffect,useState}from'react'
 import{View,Text,TouchableOpacity,StyleSheet,ScrollView,Alert,Image,TextInput}from'react-native'
 import{supabase}from'../lib/supabase'
-import{launchImageLibraryAsync,requestMediaLibraryPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
+import{launchImageLibraryAsync,launchCameraAsync,requestMediaLibraryPermissionsAsync,requestCameraPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
 import SydeHeader from'../components/SydeHeader'
 import BlockedUsersScreen from'./BlockedUsersScreen'
 
@@ -51,27 +51,39 @@ setStats({likes:likesRes.count||0,matches:matchesRes.count||0,posts:postsRes.cou
 setLoading(false)
 }
 
-const handlePickPhoto=async()=>{
-const perm=await requestMediaLibraryPermissionsAsync()
-if(perm.granted===false){Alert.alert("Permission needed","Please allow photo access");return}
-const result=await launchImageLibraryAsync({mediaTypes:MediaTypeOptions.Images,allowsEditing:true,aspect:[1,1],quality:0.7})
-if(result.canceled)return
+const uploadPhoto=async(uri:string)=>{
 setUploadingPhoto(true)
 try{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
-const uri=result.assets[0].uri
 const fileName=user.id+"-"+Date.now()+".jpg"
-const formData=new FormData()
-formData.append("file",{uri,name:fileName,type:"image/jpeg"} as any)
-const{error:ue}=await supabase.storage.from("avatars").upload(fileName,formData,{contentType:"multipart/form-data",upsert:true})
+const response=await fetch(uri)
+const blob=await response.blob()
+const{error:ue}=await supabase.storage.from("avatars").upload(fileName,blob,{contentType:"image/jpeg",upsert:true})
 if(ue){Alert.alert("Upload failed",ue.message);setUploadingPhoto(false);return}
 const{data:ud}=supabase.storage.from("avatars").getPublicUrl(fileName)
 await supabase.from("users").update({avatar_url:ud.publicUrl}).eq("id",user.id)
 setProfile(prev=>prev?{...prev,avatar_url:ud.publicUrl}:prev)
 Alert.alert("Photo updated!","Profile photo updated")
-}catch(e){}
+}catch(e:any){Alert.alert("Error",e.message)}
 setUploadingPhoto(false)
+}
+const handlePickPhoto=async()=>{
+Alert.alert("Profile Photo","Choose how to add your photo",[
+{text:"Take Photo",onPress:async()=>{
+const perm=await requestCameraPermissionsAsync()
+if(perm.granted===false){Alert.alert("Permission needed","Please allow camera access");return}
+const result=await launchCameraAsync({allowsEditing:true,aspect:[1,1],quality:0.7})
+if(!result.canceled)await uploadPhoto(result.assets[0].uri)
+}},
+{text:"Choose from Library",onPress:async()=>{
+const perm=await requestMediaLibraryPermissionsAsync()
+if(perm.granted===false){Alert.alert("Permission needed","Please allow photo library access");return}
+const result=await launchImageLibraryAsync({mediaTypes:MediaTypeOptions.Images,allowsEditing:true,aspect:[1,1],quality:0.7})
+if(!result.canceled)await uploadPhoto(result.assets[0].uri)
+}},
+{text:"Cancel",style:"cancel"}
+])
 }
 const handleSave=async()=>{
 setSaving(true)
