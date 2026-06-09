@@ -51,21 +51,27 @@ setStats({likes:likesRes.count||0,matches:matchesRes.count||0,posts:postsRes.cou
 setLoading(false)
 }
 
-const uploadPhoto=async(uri:string)=>{
+const uploadPhoto=async(uri:string,base64?:string)=>{
 setUploadingPhoto(true)
 try{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
 const fileName=user.id+"-"+Date.now()+".jpg"
+let uploadData:any
+if(base64){
+const byteArray=Uint8Array.from(atob(base64),c=>c.charCodeAt(0))
+uploadData=byteArray
+}else{
 const response=await fetch(uri)
-const blob=await response.blob()
-const{error:ue}=await supabase.storage.from("avatars").upload(fileName,blob,{contentType:"image/jpeg",upsert:true})
+uploadData=await response.arrayBuffer()
+}
+const{error:ue}=await supabase.storage.from("avatars").upload(fileName,uploadData,{contentType:"image/jpeg",upsert:true})
 if(ue){Alert.alert("Upload failed",ue.message);setUploadingPhoto(false);return}
 const{data:ud}=supabase.storage.from("avatars").getPublicUrl(fileName)
 await supabase.from("users").update({avatar_url:ud.publicUrl}).eq("id",user.id)
 setProfile(prev=>prev?{...prev,avatar_url:ud.publicUrl}:prev)
 Alert.alert("Photo updated!","Profile photo updated")
-}catch(e:any){Alert.alert("Error",e.message)}
+}catch(e:any){Alert.alert("Error",e.message||"Upload failed")}
 setUploadingPhoto(false)
 }
 const handlePickPhoto=async()=>{
@@ -73,14 +79,14 @@ Alert.alert("Profile Photo","Choose how to add your photo",[
 {text:"Take Photo",onPress:async()=>{
 const perm=await requestCameraPermissionsAsync()
 if(perm.granted===false){Alert.alert("Permission needed","Please allow camera access");return}
-const result=await launchCameraAsync({allowsEditing:true,aspect:[1,1],quality:0.7})
-if(!result.canceled)await uploadPhoto(result.assets[0].uri)
+const result=await launchCameraAsync({allowsEditing:true,aspect:[1,1],quality:0.7,base64:true})
+if(!result.canceled)await uploadPhoto(result.assets[0].uri,result.assets[0].base64||undefined)
 }},
 {text:"Choose from Library",onPress:async()=>{
 const perm=await requestMediaLibraryPermissionsAsync()
 if(perm.granted===false){Alert.alert("Permission needed","Please allow photo library access");return}
-const result=await launchImageLibraryAsync({mediaTypes:MediaTypeOptions.Images,allowsEditing:true,aspect:[1,1],quality:0.7})
-if(!result.canceled)await uploadPhoto(result.assets[0].uri)
+const result=await launchImageLibraryAsync({mediaTypes:MediaTypeOptions.Images,allowsEditing:true,aspect:[1,1],quality:0.7,base64:true})
+if(!result.canceled)await uploadPhoto(result.assets[0].uri,result.assets[0].base64||undefined)
 }},
 {text:"Cancel",style:"cancel"}
 ])
