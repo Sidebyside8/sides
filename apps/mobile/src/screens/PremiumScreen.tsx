@@ -17,12 +17,16 @@ getPremiumProduct().then(p=>{setProduct(p);setLoading(false)})
 
 const handlePurchase=async()=>{
 setPurchasing(true)
+try{
 const success=await purchasePremium()
 if(success){
 Alert.alert('Welcome to Premium!','You now have access to all Syde Vibe Premium features.')
 onSuccess()
 }else{
-Alert.alert('Purchase failed','Please try again or restore purchases.')
+Alert.alert('Purchase Unavailable','In-app purchases are not available on this device. Please use an iPhone to subscribe.')
+}
+}catch(e:any){
+Alert.alert('Purchase Error',e.message||'Unable to complete purchase. Please try again.')
 }
 setPurchasing(false)
 }

@@ -115,6 +115,32 @@ const updated=current.includes(pref)?current.filter(p=>p!==pref):[...current,pre
 setEditData(prev=>({...prev,preferences:updated}))
 }
 
+const handleDeleteAccount=async()=>{
+Alert.alert('Delete Account','Are you sure you want to permanently delete your account? This cannot be undone.',[
+{text:'Cancel',style:'cancel'},
+{text:'Delete Account',style:'destructive',onPress:async()=>{
+Alert.alert('Final Confirmation','All your data, matches, and messages will be permanently deleted.',[
+{text:'Cancel',style:'cancel'},
+{text:'Yes, Delete Everything',style:'destructive',onPress:async()=>{
+try{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+await supabase.from('messages').delete().eq('sender_id',user.id)
+await supabase.from('direct_messages').delete().eq('sender_id',user.id).or('recipient_id.eq.'+user.id)
+await supabase.from('matches').delete().or('user1_id.eq.'+user.id+',user2_id.eq.'+user.id)
+await supabase.from('likes').delete().eq('liker_id',user.id)
+await supabase.from('favorites').delete().eq('user_id',user.id)
+await supabase.from('blocks').delete().eq('blocker_id',user.id)
+await supabase.from('community_posts').delete().eq('user_id',user.id)
+await supabase.from('events').delete().eq('user_id',user.id)
+await supabase.from('users').delete().eq('id',user.id)
+await supabase.auth.signOut()
+}catch(e:any){Alert.alert('Error',e.message||'Failed to delete account')}
+}}
+])
+}}
+])
+}
 const handleSignOut=async()=>{
 Alert.alert('Sign Out','Are you sure?',[
 {text:'Cancel',style:'cancel'},
@@ -210,6 +236,9 @@ activeOpacity={editing?0.7:1}
 <Text style={s.blockedButtonText}>🚫 Manage Blocked Users</Text>
 </TouchableOpacity>
 
+<TouchableOpacity style={s.deleteAccountButton} onPress={handleDeleteAccount}>
+<Text style={s.deleteAccountText}>🗑️ Delete Account</Text>
+</TouchableOpacity>
 <TouchableOpacity style={s.signOutButton} onPress={handleSignOut}>
 <Text style={s.signOutText}>Sign Out</Text>
 </TouchableOpacity>
@@ -256,6 +285,8 @@ premiumButton:{backgroundColor:'#F5A623',borderRadius:12,padding:16,alignItems:'
 premiumButtonText:{color:'#0A1628',fontSize:16,fontWeight:'700'},
 blockedButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(0,0,0,0.15)'},
 blockedButtonText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
+deleteAccountButton:{backgroundColor:'rgba(255,0,0,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(255,0,0,0.4)'},
+deleteAccountText:{color:'#ff4444',fontSize:16,fontWeight:'600'},
 signOutButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,borderWidth:1,borderColor:'#FF6B00'},
 signOutText:{color:'#FF8C00',fontSize:16,fontWeight:'600'},
 loading:{flex:1,backgroundColor:'transparent',alignItems:'center',justifyContent:'center'},
