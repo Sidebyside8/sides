@@ -11,6 +11,7 @@ import DiscoverScreen from'./src/screens/DiscoverScreen'
 import MatchesScreen from'./src/screens/MatchesScreen'
 import MessagesScreen from'./src/screens/MessagesScreen'
 import MessagesListScreen from'./src/screens/MessagesListScreen'
+import DirectMessageScreen from'./src/screens/DirectMessageScreen'
 import CommunityScreen from'./src/screens/CommunityScreen'
 import ProfileScreen from'./src/screens/ProfileScreen'
 import PremiumScreen from'./src/screens/PremiumScreen'
@@ -21,6 +22,7 @@ const[initialized,setInitialized]=useState(false)
 const[hasProfile,setHasProfile]=useState<boolean|null>(null)
 const[activeTab,setActiveTab]=useState<Tab>('discover')
 const[activeMatch,setActiveMatch]=useState<{matchId:string;otherUser:any}|null>(null)
+const[activeDirectMessage,setActiveDirectMessage]=useState<any|null>(null)
 const[showPremium,setShowPremium]=useState(false)
 const[isPremium,setIsPremium]=useState(false)
 const profileChecked=useRef<string|null>(null)
@@ -61,13 +63,14 @@ if(!initialized||hasProfile===null)return(
 if(!session)return<LoginScreen/>
 if(!hasProfile)return<ProfileSetupScreen onComplete={()=>setHasProfile(true)}/>
 if(showPremium)return<PremiumScreen onClose={()=>setShowPremium(false)} onSuccess={()=>{setIsPremium(true);setShowPremium(false)}}/>
+if(activeDirectMessage)return<DirectMessageScreen otherUser={activeDirectMessage} onBack={()=>setActiveDirectMessage(null)}/>
 if(activeMatch)return<MessagesScreen matchId={activeMatch.matchId} otherUser={activeMatch.otherUser} onBack={()=>setActiveMatch(null)}/>
 return(
 <LinearGradient colors={GRADIENT.colors} start={GRADIENT.start} end={GRADIENT.end} style={s.container}>
 <View style={s.content}>
-{activeTab==='discover'&&<DiscoverScreen/>}
+{activeTab==='discover'&&<DiscoverScreen onChat={(user)=>setActiveDirectMessage(user)}/>}
 {activeTab==='matches'&&<MatchesScreen onSelectMatch={(matchId,otherUser)=>setActiveMatch({matchId,otherUser})}/>}
-{activeTab==='messages'&&<MessagesListScreen onSelectMatch={(matchId,otherUser)=>setActiveMatch({matchId,otherUser})}/>}
+{activeTab==='messages'&&<MessagesListScreen onSelectMatch={(matchId,otherUser)=>setActiveMatch({matchId,otherUser})} onDirectMessage={(user)=>setActiveDirectMessage(user)}/>}
 {activeTab==='community'&&<CommunityScreen/>}
 {activeTab==='profile'&&<ProfileScreen onUpgrade={()=>setShowPremium(true)} isPremium={isPremium}/>}
 </View>

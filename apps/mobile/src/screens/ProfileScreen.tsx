@@ -22,7 +22,7 @@ const PREFERENCES=[
 'Intimate companionship and emotional connection',
 ]
 
-type Profile={id:string;username:string;display_name:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[]}
+type Profile={id:string;username:string;display_name:string;title?:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[]}
 type Stats={likes:number;matches:number;posts:number}
 
 export default function ProfileScreen({onUpgrade,isPremium}:{onUpgrade?:()=>void;isPremium?:boolean}){
@@ -97,6 +97,7 @@ const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
 const{error}=await supabase.from('users').update({
 display_name:editData.display_name,
+title:editData.title,
 bio:editData.bio,
 location:editData.location,
 looking_for:editData.looking_for,
@@ -156,6 +157,8 @@ return(
 
 <View style={s.infoCard}>
 <Text style={s.sectionTitle}>About Me</Text>
+<Text style={s.infoLabel}>Title (15 chars max)</Text>
+{editing?<TextInput style={s.editInput} value={editData.title} onChangeText={v=>setEditData(prev=>({...prev,title:v.slice(0,15)}))} placeholder="e.g. Looking for love" placeholderTextColor="rgba(255,255,255,0.6)" maxLength={15}/>:<Text style={s.infoValue}>{profile?.title||'Not set'}</Text>}
 <Text style={s.infoLabel}>Bio</Text>
 {editing?<TextInput style={[s.editInput,s.bioInput]} value={editData.bio} onChangeText={v=>setEditData(prev=>({...prev,bio:v}))} placeholder="Tell people about yourself..." placeholderTextColor="#888" multiline/>
 :<Text style={s.infoValue}>{profile?.bio||'No bio yet'}</Text>}
