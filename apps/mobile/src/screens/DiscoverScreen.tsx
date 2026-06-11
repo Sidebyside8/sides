@@ -1,4 +1,5 @@
 import{useEffect,useState}from'react'
+import*as Location from'expo-location'
 import{View,Text,TouchableOpacity,StyleSheet,FlatList,Alert,Image,Dimensions}from'react-native'
 import{supabase}from'../lib/supabase'
 import SydeHeader from'../components/SydeHeader'
@@ -19,6 +20,7 @@ const[filter,setFilter]=useState<'nearby'|'global'|'favorites'>('global')
 const[favorites,setFavorites]=useState<Set<string>>(new Set())
 const[selectedUser,setSelectedUser]=useState<User|null>(null)
 const[showModal,setShowModal]=useState(false)
+const[myCoords,setMyCoords]=useState<{lat:number;lng:number}|null>(null)
 
 useEffect(()=>{loadUsers()},[filter])
 
@@ -27,7 +29,19 @@ setLoading(true)
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
 setCurrentUserId(user.id)
-const{data:myProfile}=await supabase.from('users').select('location').eq('id',user.id).single()
+const{data:myProfile}=await supabase.from('users').select('location,latitude,longitude').eq('id',user.id).single()
+try{
+const{status}=await Location.requestForegroundPermissionsAsync()
+if(status==='granted'){
+const loc=await Location.getCurrentPositionAsync({accuracy:Location.Accuracy.Balanced})
+const lat=loc.coords.latitude
+const lng=loc.coords.longitude
+setMyCoords({lat,lng})
+await supabase.from('users').update({latitude:lat,longitude:lng}).eq('id',user.id)
+}else if(myProfile?.latitude){
+setMyCoords({lat:myProfile.latitude,lng:myProfile.longitude})
+}
+}catch(e){if(myProfile?.latitude)setMyCoords({lat:myProfile.latitude,lng:myProfile.longitude})}
 setCurrentLocation(myProfile?.location||null)
 const{data:favData}=await supabase.from('favorites').select('favorited_id').eq('user_id',user.id)
 const favIds=favData?favData.map((f:any)=>f.favorited_id):[]
@@ -36,12 +50,12 @@ const{data:blockData}=await supabase.from('blocks').select('blocked_id').eq('blo
 const blockedIds=blockData?blockData.map((b:any)=>b.blocked_id):[]
 if(filter==='favorites'){
 if(favIds.length===0){setUsers([]);setLoading(false);return}
-const{data}=await supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type').in('id',favIds)
+const{data}=await supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude').in('id',favIds)
 setUsers((data||[]).filter((u:User)=>!blockedIds.includes(u.id)))
 setLoading(false)
 return
 }
-let query=supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type').neq('id',user.id).eq('is_active',true).limit(99)
+let query=supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude').neq('id',user.id).eq('is_active',true).limit(99)
 if(filter==='nearby'&&myProfile?.location){query=query.ilike('location',`%${myProfile.location.split(',')[0].trim()}%`)}
 const{data,error}=await query
 if(error)Alert.alert('Error',error.message)
@@ -76,6 +90,21 @@ setShowModal(false)
 setTimeout(()=>onChat(user),300)
 }
 
+const calcDistance=(lat1:number,lng1:number,lat2:number,lng2:number)=>{
+const R=3958.8
+const dLat=(lat2-lat1)*Math.PI/180
+const dLng=(lng2-lng1)*Math.PI/180
+const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2)
+const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))
+const miles=R*c
+if(miles<0.1)return'nearby'
+if(miles<1)return Math.round(miles*5280)+'ft'
+return miles.toFixed(1)+'mi'
+}
+const getDistance=(user:User)=>{
+if(!myCoords||(user as any).latitude==null)return null
+return calcDistance(myCoords.lat,myCoords.lng,(user as any).latitude,(user as any).longitude)
+}
 const handleCardPress=(user:User)=>{
 setSelectedUser(user)
 setShowModal(true)
@@ -113,6 +142,7 @@ renderItem={({item})=>(
 {item.avatar_url?<Image source={{uri:item.avatar_url}} style={s.cardImage}/>
 :<View style={s.cardPlaceholder}><Text style={s.cardPlaceholderText}>{item.display_name?.[0]||'?'}</Text></View>}
 {favorites.has(item.id)&&<View style={s.favBadge}><Text style={s.favBadgeText}>⭐</Text></View>}
+{(()=>{const d=getDistance(item as any);return d?<View style={s.distBadge}><Text style={s.distText}>{d}</Text></View>:null})()}
 </View>
 <Text style={s.cardTitle} numberOfLines={1}>{item.title||item.display_name}</Text>
 </TouchableOpacity>
@@ -152,4 +182,6 @@ favBadgeText:{fontSize:12},
 cardTitle:{color:'#ffffff',fontSize:11,marginTop:4,textAlign:'center',fontWeight:'500',width:CARD_SIZE},
 loadingText:{color:'#ffffff',fontSize:18,fontWeight:'600'},
 subText:{color:'rgba(255,255,255,0.7)',fontSize:14,marginTop:8},
+distBadge:{position:'absolute',bottom:4,left:4,backgroundColor:'rgba(0,0,0,0.65)',borderRadius:8,paddingHorizontal:5,paddingVertical:2},
+distText:{color:'#ffffff',fontSize:9,fontWeight:'700'},
 })
