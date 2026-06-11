@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 
 export default function TermsScreen({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
   return (
-    <LinearGradient colors={['#B8D4E8', '#E8C4A0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+    <LinearGradient colors={['#0A4A7A', '#9A3A08']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
       <View style={styles.container}>
         <Text style={styles.title}>Terms of Service</Text>
         <Text style={styles.subtitle}>Please read and accept our terms to continue</Text>
@@ -55,9 +55,9 @@ export default function TermsScreen({ onAccept, onDecline }: { onAccept: () => v
 const styles = StyleSheet.create({
   container: { flex: 1, paddingTop: 60, paddingHorizontal: 24, paddingBottom: 24 },
   title: { fontSize: 26, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
-  subtitle: { fontSize: 14, color: '#556677', marginBottom: 16 },
+  subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginBottom: 16 },
   scrollBox: {
-    flex: 1, backgroundColor: 'rgba(255,255,255,0.6)',
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
     marginBottom: 16,
   },
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   acceptText: { color: '#ffffff', fontSize: 16, fontWeight: '600' },
   declineButton: {
-    backgroundColor: 'rgba(255,255,255,0.5)', borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12,
     padding: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)',
   },
   declineText: { color: '#556677', fontSize: 16 },
