@@ -2,31 +2,27 @@ import{useEffect,useState}from'react'
 import{View,Text,TouchableOpacity,StyleSheet,FlatList,Image}from'react-native'
 import{supabase}from'../lib/supabase'
 import SydeHeader from'../components/SydeHeader'
-type Conversation={matchId:string;otherUser:{id:string;display_name:string;username:string;avatar_url?:string};lastMessage:string;lastTime:string;unread:boolean}
-export default function MessagesListScreen({onSelectMatch}:{onSelectMatch:(matchId:string,otherUser:any)=>void}){
+type Conversation={userId:string;otherUser:{id:string;display_name:string;username:string;avatar_url?:string};lastMessage:string;lastTime:string}
+export default function MessagesListScreen({onDirectMessage}:{onDirectMessage:(user:any)=>void}){
 const[convos,setConvos]=useState<Conversation[]>([])
 const[loading,setLoading]=useState(true)
 useEffect(()=>{loadConversations()},[])
 const loadConversations=async()=>{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
-const{data:matches}=await supabase.from('matches').select('*').or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`)
-if(!matches||matches.length===0){setConvos([]);setLoading(false);return}
-const convosWithData=await Promise.all(matches.map(async(match:any)=>{
-const otherId=match.user1_id===user.id?match.user2_id:match.user1_id
+const{data:messages}=await supabase.from('direct_messages').select('*').or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`).order('created_at',{ascending:false})
+if(!messages||messages.length===0){setConvos([]);setLoading(false);return}
+const userMap=new Map<string,any>()
+messages.forEach((m:any)=>{
+const otherId=m.sender_id===user.id?m.recipient_id:m.sender_id
+if(!userMap.has(otherId)){userMap.set(otherId,{lastMessage:m.content,lastTime:m.created_at})}
+})
+const convosWithUsers=await Promise.all(Array.from(userMap.entries()).map(async([otherId,msgData])=>{
 const{data:otherUser}=await supabase.from('users').select('id,display_name,username,avatar_url').eq('id',otherId).single()
-const{data:messages}=await supabase.from('messages').select('*').eq('match_id',match.id).order('created_at',{ascending:false}).limit(1)
-const lastMsg=messages?.[0]
-return{
-matchId:match.id,
-otherUser,
-lastMessage:lastMsg?.content||'No messages yet',
-lastTime:lastMsg?.created_at||match.created_at,
-unread:false,
-}
+return{userId:otherId,otherUser,lastMessage:msgData.lastMessage,lastTime:msgData.lastTime}
 }))
-convosWithData.sort((a,b)=>new Date(b.lastTime).getTime()-new Date(a.lastTime).getTime())
-setConvos(convosWithData)
+convosWithUsers.sort((a,b)=>new Date(b.lastTime).getTime()-new Date(a.lastTime).getTime())
+setConvos(convosWithUsers)
 setLoading(false)
 }
 const timeAgo=(d:string)=>{
@@ -43,9 +39,9 @@ return(
 <View style={s.container}>
 <SydeHeader title="Messages"/>
 {loading?<View style={s.center}><Text style={s.loadingText}>Loading messages...</Text></View>
-:convos.length===0?<View style={s.center}><Text style={s.loadingText}>No messages yet</Text><Text style={s.subText}>Match with someone to start chatting</Text></View>
-:<FlatList data={convos} keyExtractor={i=>i.matchId} contentContainerStyle={s.list} renderItem={({item})=>(
-<TouchableOpacity style={s.card} onPress={()=>onSelectMatch(item.matchId,item.otherUser)}>
+:convos.length===0?<View style={s.center}><Text style={s.loadingText}>No messages yet</Text><Text style={s.subText}>Discover people and start chatting!</Text></View>
+:<FlatList data={convos} keyExtractor={i=>i.userId} contentContainerStyle={s.list} renderItem={({item})=>(
+<TouchableOpacity style={s.card} onPress={()=>onDirectMessage(item.otherUser)}>
 <View style={s.avatarContainer}>
 {item.otherUser?.avatar_url?<Image source={{uri:item.otherUser.avatar_url}} style={s.avatar}/>
 :<View style={s.avatarPlaceholder}><Text style={s.avatarText}>{item.otherUser?.display_name?.[0]||'?'}</Text></View>}
@@ -63,7 +59,7 @@ return(
 )
 }
 const s=StyleSheet.create({
-container:{flex:1,backgroundColor:'transparent'},
+container:{flex:1},
 center:{flex:1,alignItems:'center',justifyContent:'center'},
 list:{paddingHorizontal:16,paddingBottom:24},
 card:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:16,padding:16,marginBottom:8,flexDirection:'row',alignItems:'center',borderWidth:1,borderColor:'rgba(255,255,255,0.25)'},
@@ -74,7 +70,7 @@ avatarText:{color:'#ffffff',fontSize:22,fontWeight:'bold'},
 info:{flex:1},
 nameRow:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:4},
 name:{color:'#ffffff',fontSize:16,fontWeight:'600'},
-time:{color:'#888',fontSize:12},
+time:{color:'rgba(255,255,255,0.5)',fontSize:12},
 lastMessage:{color:'rgba(255,255,255,0.7)',fontSize:14},
 loadingText:{color:'#ffffff',fontSize:18,fontWeight:'600'},
 subText:{color:'rgba(255,255,255,0.7)',fontSize:14,marginTop:8},

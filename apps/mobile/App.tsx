@@ -8,20 +8,18 @@ import{registerForPushNotifications,savePushToken}from'./src/lib/notifications'
 import LoginScreen from'./src/screens/LoginScreen'
 import ProfileSetupScreen from'./src/screens/ProfileSetupScreen'
 import DiscoverScreen from'./src/screens/DiscoverScreen'
-import MatchesScreen from'./src/screens/MatchesScreen'
 import MessagesScreen from'./src/screens/MessagesScreen'
 import MessagesListScreen from'./src/screens/MessagesListScreen'
 import DirectMessageScreen from'./src/screens/DirectMessageScreen'
 import CommunityScreen from'./src/screens/CommunityScreen'
 import ProfileScreen from'./src/screens/ProfileScreen'
 import PremiumScreen from'./src/screens/PremiumScreen'
-type Tab='discover'|'matches'|'messages'|'community'|'profile'
+type Tab='discover'|'messages'|'community'|'profile'
 export default function App(){
 const[session,setSession]=useState<Session|null>(null)
 const[initialized,setInitialized]=useState(false)
 const[hasProfile,setHasProfile]=useState<boolean|null>(null)
 const[activeTab,setActiveTab]=useState<Tab>('discover')
-const[activeMatch,setActiveMatch]=useState<{matchId:string;otherUser:any}|null>(null)
 const[activeDirectMessage,setActiveDirectMessage]=useState<any|null>(null)
 const[showPremium,setShowPremium]=useState(false)
 const[isPremium,setIsPremium]=useState(false)
@@ -64,22 +62,17 @@ if(!session)return<LoginScreen/>
 if(!hasProfile)return<ProfileSetupScreen onComplete={()=>setHasProfile(true)}/>
 if(showPremium)return<PremiumScreen onClose={()=>setShowPremium(false)} onSuccess={()=>{setIsPremium(true);setShowPremium(false)}}/>
 if(activeDirectMessage)return<DirectMessageScreen otherUser={activeDirectMessage} onBack={()=>setActiveDirectMessage(null)}/>
-if(activeMatch)return<MessagesScreen matchId={activeMatch.matchId} otherUser={activeMatch.otherUser} onBack={()=>setActiveMatch(null)}/>
 return(
 <LinearGradient colors={GRADIENT.colors} start={GRADIENT.start} end={GRADIENT.end} style={s.container}>
 <View style={s.content}>
 {activeTab==='discover'&&<DiscoverScreen onChat={(user)=>setActiveDirectMessage(user)}/>}
-{activeTab==='matches'&&<MatchesScreen onSelectMatch={(matchId,otherUser)=>setActiveMatch({matchId,otherUser})}/>}
-{activeTab==='messages'&&<MessagesListScreen onSelectMatch={(matchId,otherUser)=>setActiveMatch({matchId,otherUser})} onDirectMessage={(user)=>setActiveDirectMessage(user)}/>}
+{activeTab==='messages'&&<MessagesListScreen onDirectMessage={(user)=>setActiveDirectMessage(user)}/>}
 {activeTab==='community'&&<CommunityScreen/>}
 {activeTab==='profile'&&<ProfileScreen onUpgrade={()=>setShowPremium(true)} isPremium={isPremium}/>}
 </View>
 <View style={s.tabBar}>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('discover')}>
 <Text style={[s.tabText,activeTab==='discover'&&s.tabActive]}>Discover</Text>
-</TouchableOpacity>
-<TouchableOpacity style={s.tab} onPress={()=>setActiveTab('matches')}>
-<Text style={[s.tabText,activeTab==='matches'&&s.tabActive]}>Matches</Text>
 </TouchableOpacity>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('messages')}>
 <Text style={[s.tabText,activeTab==='messages'&&s.tabActive]}>Messages</Text>
