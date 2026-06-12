@@ -4,6 +4,7 @@ import{supabase}from'../lib/supabase'
 import{launchImageLibraryAsync,launchCameraAsync,requestMediaLibraryPermissionsAsync,requestCameraPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
 import SydeHeader from'../components/SydeHeader'
 import BlockedUsersScreen from'./BlockedUsersScreen'
+import PhotosManager from'../components/PhotosManager'
 
 const PREFERENCES=[
 'Kissing and making out',
