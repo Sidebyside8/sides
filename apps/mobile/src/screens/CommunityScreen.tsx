@@ -1,7 +1,8 @@
 import{useEffect,useState}from'react'
-import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,Alert,KeyboardAvoidingView,Platform,Modal,ScrollView}from'react-native'
+import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,Alert,KeyboardAvoidingView,Platform,Modal,ScrollView,Image}from'react-native'
 import{supabase}from'../lib/supabase'
 import SydeHeader from'../components/SydeHeader'
+import CreateEventScreen from'./CreateEventScreen'
 type Post={id:string;content:string;user_id:string;created_at:string;author:{display_name:string;username:string}}
 type Event={id:string;title:string;description:string;location:string;event_date:string;user_id:string;created_at:string;author:{display_name:string;username:string}}
 export default function CommunityScreen(){
@@ -13,6 +14,7 @@ const[loading,setLoading]=useState(true)
 const[posting,setPosting]=useState(false)
 const[currentUserId,setCurrentUserId]=useState<string|null>(null)
 const[showEventModal,setShowEventModal]=useState(false)
+const[showCreateEvent,setShowCreateEvent]=useState(false)
 const[eventTitle,setEventTitle]=useState('')
 const[eventDesc,setEventDesc]=useState('')
 const[eventLocation,setEventLocation]=useState('')
@@ -88,6 +90,7 @@ const formatEventDate=(d:string)=>{
 const date=new Date(d)
 return date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})
 }
+if(showCreateEvent)return<CreateEventScreen onBack={()=>setShowCreateEvent(false)} onCreated={()=>{setShowCreateEvent(false);if(tab==='events')loadContent()}}/>
 return(
 <KeyboardAvoidingView style={s.container} behavior={Platform.OS==='ios'?'padding':'height'}>
 <SydeHeader title="Community"/>
@@ -125,7 +128,7 @@ renderItem={({item})=>(
 </>
 ):(
 <>
-<TouchableOpacity style={s.createEventButton} onPress={()=>setShowEventModal(true)}>
+<TouchableOpacity style={s.createEventButton} onPress={()=>setShowCreateEvent(true)}>
 <Text style={s.createEventText}>+ Create Event</Text>
 </TouchableOpacity>
 {loading?<View style={s.center}><Text style={s.loadingText}>Loading events...</Text></View>
@@ -133,6 +136,7 @@ renderItem={({item})=>(
 ListEmptyComponent={<View style={s.empty}><Text style={s.emptyText}>No events yet</Text><Text style={s.emptySubText}>Be the first to create one!</Text></View>}
 renderItem={({item})=>(
 <View style={s.eventCard}>
+{(item as any).image_url?<Image source={{uri:(item as any).image_url}} style={s.eventImage}/>:null}
 <View style={s.eventHeader}>
 <Text style={s.eventTitle}>{item.title}</Text>
 <Text style={s.eventDate}>📅 {formatEventDate(item.event_date)}</Text>
@@ -198,10 +202,10 @@ content:{color:'#ffffff',fontSize:15,lineHeight:22},
 eventCard:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:16,padding:16,marginBottom:12,borderWidth:1,borderColor:'rgba(255,255,255,0.25)'},
 eventHeader:{marginBottom:8},
 eventTitle:{color:'#ffffff',fontSize:17,fontWeight:'700',marginBottom:4},
-eventDate:{color:'#2196F3',fontSize:13,marginBottom:2},
+eventDate:{color:'#7EC8F5',fontSize:13,marginBottom:2},
 eventLocation:{color:'rgba(255,255,255,0.7)',fontSize:13,marginBottom:2},
-eventDesc:{color:'#334455',fontSize:14,lineHeight:20,marginBottom:8},
-eventAuthor:{color:'#888',fontSize:12},
+eventDesc:{color:'rgba(255,255,255,0.85)',fontSize:14,lineHeight:20,marginBottom:8},
+eventAuthor:{color:'rgba(255,255,255,0.5)',fontSize:12},
 center:{flex:1,alignItems:'center',justifyContent:'center'},
 loadingText:{color:'rgba(255,255,255,0.7)',fontSize:16},
 empty:{alignItems:'center',paddingTop:60},
