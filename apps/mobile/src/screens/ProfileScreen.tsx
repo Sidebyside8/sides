@@ -23,11 +23,9 @@ const PREFERENCES=[
 ]
 
 type Profile={id:string;username:string;display_name:string;title?:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[]}
-type Stats={likes:number;matches:number;posts:number}
 
 export default function ProfileScreen({onUpgrade,isPremium}:{onUpgrade?:()=>void;isPremium?:boolean}){
 const[profile,setProfile]=useState<Profile|null>(null)
-const[stats,setStats]=useState<Stats>({likes:0,matches:0,posts:0})
 const[loading,setLoading]=useState(true)
 const[editing,setEditing]=useState(false)
 const[editData,setEditData]=useState<Partial<Profile>>({})
@@ -42,12 +40,7 @@ const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
 const{data}=await supabase.from('users').select('*').eq('id',user.id).single()
 if(data){setProfile(data);setEditData(data)}
-const[likesRes,matchesRes,postsRes]=await Promise.all([
-supabase.from('likes').select('id',{count:'exact'}).eq('liker_id',user.id),
-supabase.from('matches').select('id',{count:'exact'}).or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`),
-supabase.from('community_posts').select('id',{count:'exact'}).eq('user_id',user.id),
-])
-setStats({likes:likesRes.count||0,matches:matchesRes.count||0,posts:postsRes.count||0})
+
 setLoading(false)
 }
 
@@ -173,13 +166,7 @@ return(
 <Text style={s.username}>@{profile?.username}</Text>
 </View>
 
-<View style={s.statsRow}>
-<View style={s.statBox}><Text style={s.statNumber}>{stats.likes}</Text><Text style={s.statLabel}>Likes Sent</Text></View>
-<View style={s.statDivider}/>
-<View style={s.statBox}><Text style={s.statNumber}>{stats.matches}</Text><Text style={s.statLabel}>Matches</Text></View>
-<View style={s.statDivider}/>
-<View style={s.statBox}><Text style={s.statNumber}>{stats.posts}</Text><Text style={s.statLabel}>Posts</Text></View>
-</View>
+<PhotosManager isPremium={isPremium||false}/>
 
 <View style={s.infoCard}>
 <Text style={s.sectionTitle}>About Me</Text>
