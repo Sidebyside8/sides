@@ -86,7 +86,7 @@ return(
 )
 }}/>
 <View style={s.inputRow}>
-<TextInput style={s.input} placeholder="Message..." placeholderTextColor="rgba(255,255,255,0.5)"
+<TextInput style={s.input} placeholder="Message..." placeholderTextColor="rgba(10,22,40,0.4)"
 value={newMessage} onChangeText={setNewMessage} multiline
 returnKeyType="send" onSubmitEditing={handleSend}/>
 <TouchableOpacity style={[s.sendBtn,(!newMessage.trim()||sending)&&s.sendDisabled]}
@@ -119,7 +119,7 @@ myText:{color:'#ffffff'},
 theirText:{color:'#0A1628'},
 timeText:{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:4,alignSelf:'flex-end'},
 inputRow:{flexDirection:'row',alignItems:'flex-end',padding:12,backgroundColor:'rgba(0,0,0,0.3)'},
-input:{flex:1,backgroundColor:'rgba(255,255,255,0.15)',borderRadius:20,paddingHorizontal:16,paddingVertical:10,color:'#ffffff',fontSize:15,maxHeight:100,marginRight:8,borderWidth:1,borderColor:'rgba(255,255,255,0.2)'},
+input:{flex:1,backgroundColor:'rgba(255,255,255,0.95)',borderRadius:20,paddingHorizontal:16,paddingVertical:10,color:'#0A1628',fontSize:15,maxHeight:100,marginRight:8,borderWidth:1,borderColor:'rgba(255,255,255,0.3)'},
 sendBtn:{backgroundColor:'#2196F3',borderRadius:20,paddingHorizontal:16,paddingVertical:10},
 sendDisabled:{backgroundColor:'rgba(33,150,243,0.3)'},
 sendText:{color:'#ffffff',fontWeight:'600'},

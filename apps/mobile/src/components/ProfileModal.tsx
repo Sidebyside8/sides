@@ -1,4 +1,4 @@
-import{useState}from'react'
+import{useState,useEffect}from'react'
 import{View,Text,TouchableOpacity,StyleSheet,Modal,ScrollView,Image,Alert}from'react-native'
 import{supabase}from'../lib/supabase'
 
@@ -8,6 +8,12 @@ export default function ProfileModal({user,visible,onClose,onChat,isFavorite,onT
 user:User|null;visible:boolean;onClose:()=>void;onChat:(userId:string,user:User)=>void;
 isFavorite:boolean;onToggleFavorite:(userId:string)=>void;onBlock:(userId:string,name:string)=>void
 }){
+const[photos,setPhotos]=useState<{id:string;photo_url:string;is_profile:boolean}[]>([])
+useEffect(()=>{
+if(user&&visible){
+supabase.from('user_photos').select('*').eq('user_id',user.id).order('created_at',{ascending:true}).then(({data})=>setPhotos(data||[]))
+}
+},[user,visible])
 if(!user)return null
 return(
 <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
@@ -32,6 +38,9 @@ return(
 </TouchableOpacity>
 </View>
 </View>
+{photos.length>1&&<ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.photosStrip} contentContainerStyle={{gap:4,padding:8}}>
+{photos.map(p=><TouchableOpacity key={p.id}><Image source={{uri:p.photo_url}} style={s.stripPhoto}/></TouchableOpacity>)}
+</ScrollView>}
 <View style={s.info}>
 <Text style={s.name}>{user.display_name}</Text>
 {user.title?<Text style={s.title}>"{user.title}"</Text>:null}
@@ -72,6 +81,8 @@ actionBtnActive:{backgroundColor:'rgba(245,166,35,0.5)',borderColor:'#F5A623'},
 chatBtn:{backgroundColor:'rgba(33,150,243,0.6)',borderColor:'#2196F3'},
 actionIcon:{fontSize:22},
 info:{padding:20},
+photosStrip:{backgroundColor:'rgba(0,0,0,0.3)'},
+stripPhoto:{width:70,height:70,borderRadius:8},
 name:{color:'#ffffff',fontSize:26,fontWeight:'800',marginBottom:4},
 title:{color:'#F5A623',fontSize:16,fontStyle:'italic',marginBottom:8},
 meta:{color:'rgba(255,255,255,0.6)',fontSize:14},

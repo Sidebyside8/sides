@@ -5,6 +5,7 @@ import{Session}from'@supabase/supabase-js'
 import{supabase}from'./src/lib/supabase'
 import{GRADIENT,COLORS}from'./src/lib/theme'
 import{registerForPushNotifications,savePushToken}from'./src/lib/notifications'
+import{AppState}from'react-native'
 import LoginScreen from'./src/screens/LoginScreen'
 import ProfileSetupScreen from'./src/screens/ProfileSetupScreen'
 import DiscoverScreen from'./src/screens/DiscoverScreen'
@@ -45,8 +46,10 @@ const{data}=await supabase.from('users').select('id').eq('id',userId).maybeSingl
 const hasP=!!data
 setHasProfile(hasP)
 if(hasP){
-registerForPushNotifications().then(token=>{
-if(token)savePushToken(token)
+registerForPushNotifications().then(token=>{if(token)savePushToken(token)})
+supabase.from('users').update({is_online:true,last_seen:new Date().toISOString()}).eq('id',userId).then(()=>{})
+const sub=AppState.addEventListener('change',state=>{
+supabase.from('users').update({is_online:state==='active',last_seen:new Date().toISOString()}).eq('id',userId).then(()=>{})
 })
 }
 }catch(e){setHasProfile(false)}
