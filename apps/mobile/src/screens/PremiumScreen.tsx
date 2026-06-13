@@ -8,37 +8,40 @@ const[product,setProduct]=useState<any>(null)
 const[loading,setLoading]=useState(true)
 const[purchasing,setPurchasing]=useState(false)
 const[restoring,setRestoring]=useState(false)
+const[error,setError]=useState<string|null>(null)
 
 useEffect(()=>{
 setupPurchases().then(()=>{
-getPremiumProduct().then(p=>{setProduct(p);setLoading(false)})
+getPremiumProduct().then(p=>{
+setProduct(p)
+setLoading(false)
+if(!p)setError('Product not available. Make sure you are signed in with your Apple ID.')
+})
 })
 },[])
 
 const handlePurchase=async()=>{
+setError(null)
 setPurchasing(true)
-try{
-const success=await purchasePremium()
-if(success){
-Alert.alert('Welcome to Premium!','You now have access to all Syde Vibe Premium features.')
+const result=await purchasePremium()
+if(result.success){
+Alert.alert('Welcome to Premium! 💎','You now have access to all Syde Vibe Premium features.')
 onSuccess()
-}else{
-Alert.alert('Purchase Unavailable','In-app purchases are not available on this device. Please use an iPhone to subscribe.')
-}
-}catch(e:any){
-Alert.alert('Purchase Error',e.message||'Unable to complete purchase. Please try again.')
+}else if(result.error&&result.error!=='cancelled'){
+setError(result.error)
 }
 setPurchasing(false)
 }
 
 const handleRestore=async()=>{
+setError(null)
 setRestoring(true)
 const success=await restorePurchases()
 if(success){
 Alert.alert('Restored!','Your premium subscription has been restored.')
 onSuccess()
 }else{
-Alert.alert('Nothing to restore','No previous purchases found.')
+setError('No previous purchases found for this Apple ID.')
 }
 setRestoring(false)
 }
@@ -54,25 +57,27 @@ return(
 <Text style={s.title}>Syde Vibe Premium</Text>
 <Text style={s.subtitle}>Unlock the full experience</Text>
 
+{error&&<View style={s.errorBox}><Text style={s.errorText}>{error}</Text></View>}
+
 <View style={s.featuresCard}>
 <Text style={s.featuresTitle}>Premium Features</Text>
-<View style={s.feature}><Text style={s.featureIcon}>♾️</Text><View style={s.featureInfo}><Text style={s.featureName}>Unlimited Likes</Text><Text style={s.featureDesc}>Like as many profiles as you want</Text></View></View>
-<View style={s.feature}><Text style={s.featureIcon}>👀</Text><View style={s.featureInfo}><Text style={s.featureName}>See Who Liked You</Text><Text style={s.featureDesc}>Know who's interested before you match</Text></View></View>
-<View style={s.feature}><Text style={s.featureIcon}>⚙️</Text><View style={s.featureInfo}><Text style={s.featureName}>Advanced Filters</Text><Text style={s.featureDesc}>Filter by age and shared preferences</Text></View></View>
-<View style={s.feature}><Text style={s.featureIcon}>🚀</Text><View style={s.featureInfo}><Text style={s.featureName}>Priority in Discover</Text><Text style={s.featureDesc}>Appear higher in other users feeds</Text></View></View>
-<View style={s.feature}><Text style={s.featureIcon}>⭐</Text><View style={s.featureInfo}><Text style={s.featureName}>Premium Badge</Text><Text style={s.featureDesc}>Stand out with a premium profile badge</Text></View></View>
+<View style={s.feature}><Text style={s.featureIcon}>📸</Text><View style={s.featureInfo}><Text style={s.featureName}>6 Profile Photos</Text><Text style={s.featureDesc}>Free users get 3 photos</Text></View></View>
+<View style={s.feature}><Text style={s.featureIcon}>⚙️</Text><View style={s.featureInfo}><Text style={s.featureName}>Advanced Filters</Text><Text style={s.featureDesc}>Filter by age and preferences</Text></View></View>
+<View style={s.feature}><Text style={s.featureIcon}>🚀</Text><View style={s.featureInfo}><Text style={s.featureName}>Priority in Discover</Text><Text style={s.featureDesc}>Appear higher in feeds</Text></View></View>
+<View style={s.feature}><Text style={s.featureIcon}>💬</Text><View style={s.featureInfo}><Text style={s.featureName}>Unlimited Messages</Text><Text style={s.featureDesc}>Message anyone anytime</Text></View></View>
+<View style={s.feature}><Text style={s.featureIcon}>💎</Text><View style={s.featureInfo}><Text style={s.featureName}>Premium Badge</Text><Text style={s.featureDesc}>Stand out with a premium badge</Text></View></View>
 </View>
 
 <View style={s.priceCard}>
 {loading?<ActivityIndicator color="#ffffff"/>:<>
 <Text style={s.price}>{product?.price||'$9.99'}</Text>
 <Text style={s.period}>per month</Text>
-<Text style={s.trial}>Cancel anytime</Text>
+<Text style={s.trial}>Cancel anytime in Apple ID settings</Text>
 </>}
 </View>
 
 <TouchableOpacity style={[s.purchaseBtn,purchasing&&s.purchaseBtnDisabled]} onPress={handlePurchase} disabled={purchasing||loading}>
-{purchasing?<ActivityIndicator color="#ffffff"/>:<Text style={s.purchaseBtnText}>Subscribe Now</Text>}
+{purchasing?<ActivityIndicator color="#0A1628"/>:<Text style={s.purchaseBtnText}>Subscribe Now</Text>}
 </TouchableOpacity>
 
 <TouchableOpacity style={s.restoreBtn} onPress={handleRestore} disabled={restoring}>
@@ -92,7 +97,9 @@ closeBtn:{position:'absolute',top:60,right:24,width:36,height:36,alignItems:'cen
 closeBtnText:{color:'rgba(255,255,255,0.7)',fontSize:20},
 crown:{fontSize:60,marginTop:40,marginBottom:16},
 title:{fontSize:28,fontWeight:'900',color:'#ffffff',marginBottom:8},
-subtitle:{fontSize:16,color:'rgba(255,255,255,0.7)',marginBottom:32},
+subtitle:{fontSize:16,color:'rgba(255,255,255,0.7)',marginBottom:16},
+errorBox:{backgroundColor:'rgba(255,0,0,0.2)',borderRadius:12,padding:12,marginBottom:16,width:'100%',borderWidth:1,borderColor:'rgba(255,0,0,0.3)'},
+errorText:{color:'#ffaaaa',fontSize:13,textAlign:'center'},
 featuresCard:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:20,padding:20,width:'100%',marginBottom:24,borderWidth:1,borderColor:'rgba(255,255,255,0.25)'},
 featuresTitle:{color:'#ffffff',fontSize:16,fontWeight:'700',marginBottom:16},
 feature:{flexDirection:'row',alignItems:'center',marginBottom:16},
