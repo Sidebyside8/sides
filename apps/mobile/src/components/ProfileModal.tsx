@@ -4,9 +4,9 @@ import{supabase}from'../lib/supabase'
 
 type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string}
 
-export default function ProfileModal({user,visible,onClose,onChat,isFavorite,onToggleFavorite,onBlock}:{
+export default function ProfileModal({user,visible,onClose,onChat,isFavorite,onToggleFavorite,onBlock,onReport}:{
 user:User|null;visible:boolean;onClose:()=>void;onChat:(userId:string,user:User)=>void;
-isFavorite:boolean;onToggleFavorite:(userId:string)=>void;onBlock:(userId:string,name:string)=>void
+isFavorite:boolean;onToggleFavorite:(userId:string)=>void;onBlock:(userId:string,name:string)=>void;onReport?:(userId:string,name:string)=>void
 }){
 const[photos,setPhotos]=useState<{id:string;photo_url:string;is_profile:boolean}[]>([])
 useEffect(()=>{
@@ -33,6 +33,9 @@ return(
 <TouchableOpacity style={s.actionBtn} onPress={()=>onBlock(user.id,user.display_name)}>
 <Text style={s.actionIcon}>🚫</Text>
 </TouchableOpacity>
+{onReport&&<TouchableOpacity style={s.actionBtn} onPress={()=>onReport(user.id,user.display_name)}>
+<Text style={s.actionIcon}>⚠️</Text>
+</TouchableOpacity>}
 <TouchableOpacity style={[s.actionBtn,s.chatBtn]} onPress={()=>onChat(user.id,user)}>
 <Text style={s.actionIcon}>💬</Text>
 </TouchableOpacity>

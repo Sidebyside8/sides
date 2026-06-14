@@ -37,7 +37,7 @@ export default function ProfileSetupScreen({ onComplete }: { onComplete: () => v
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <LinearGradient colors={['#B8D4E8', '#E8C4A0']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+      <LinearGradient colors={['#0A4A7A', '#9A3A08']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.title}>Set Up Your Profile</Text>
           <Text style={styles.subtitle}>Tell the community about yourself</Text>
@@ -94,11 +94,11 @@ export default function ProfileSetupScreen({ onComplete }: { onComplete: () => v
 const styles = StyleSheet.create({
   content: { padding: 24, paddingTop: 80, paddingBottom: 40 },
   title: { fontSize: 32, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#556677', marginBottom: 32 },
-  label: { fontSize: 14, color: '#445566', marginBottom: 8, fontWeight: '600' },
+  subtitle: { fontSize: 16, color: 'rgba(255,255,255,0.8)', marginBottom: 32 },
+  label: { fontSize: 14, color: 'rgba(255,255,255,0.9)', marginBottom: 8, fontWeight: '600' },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 12,
-    padding: 16, color: '#ffffff', fontSize: 16, marginBottom: 20,
+    backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 12,
+    padding: 16, color: '#0A1628', fontSize: 16, marginBottom: 20,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
   },
   bioInput: { height: 100, textAlignVertical: 'top' },

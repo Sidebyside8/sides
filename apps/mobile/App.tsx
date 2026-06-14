@@ -22,6 +22,7 @@ const[initialized,setInitialized]=useState(false)
 const[hasProfile,setHasProfile]=useState<boolean|null>(null)
 const[activeTab,setActiveTab]=useState<Tab>('discover')
 const[activeDirectMessage,setActiveDirectMessage]=useState<any|null>(null)
+const[unreadCount,setUnreadCount]=useState(0)
 const[showPremium,setShowPremium]=useState(false)
 const[isPremium,setIsPremium]=useState(false)
 const profileChecked=useRef<string|null>(null)
@@ -46,8 +47,19 @@ const{data}=await supabase.from('users').select('id').eq('id',userId).maybeSingl
 const hasP=!!data
 setHasProfile(hasP)
 if(hasP){
+const{data:premiumData}=await supabase.from('users').select('is_premium').eq('id',userId).single()
+setIsPremium(premiumData?.is_premium||false)
+}
+if(hasP){
 registerForPushNotifications().then(token=>{if(token)savePushToken(token)})
 supabase.from('users').update({is_online:true,last_seen:new Date().toISOString()}).eq('id',userId).then(()=>{})
+const loadUnread=()=>{
+supabase.from('direct_messages').select('id',{count:'exact'}).eq('recipient_id',userId).eq('read',false).then(({count})=>setUnreadCount(count||0))
+}
+loadUnread()
+const msgChannel=supabase.channel('unread-'+userId)
+.on('postgres_changes',{event:'*',schema:'public',table:'direct_messages'},()=>{loadUnread()})
+.subscribe()
 const sub=AppState.addEventListener('change',state=>{
 supabase.from('users').update({is_online:state==='active',last_seen:new Date().toISOString()}).eq('id',userId).then(()=>{})
 })
@@ -78,7 +90,10 @@ return(
 <Text style={[s.tabText,activeTab==='discover'&&s.tabActive]}>Discover</Text>
 </TouchableOpacity>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('messages')}>
+<View style={{position:'relative'}}>
 <Text style={[s.tabText,activeTab==='messages'&&s.tabActive]}>Messages</Text>
+{unreadCount>0&&<View style={s.badge}><Text style={s.badgeText}>{unreadCount>9?'9+':unreadCount}</Text></View>}
+</View>
 </TouchableOpacity>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('community')}>
 <Text style={[s.tabText,activeTab==='community'&&s.tabActive]}>Community</Text>
@@ -94,6 +109,8 @@ const s=StyleSheet.create({
 container:{flex:1},
 content:{flex:1},
 tabBar:{flexDirection:'row',backgroundColor:COLORS.tabBar,borderTopWidth:1,borderTopColor:COLORS.tabBarBorder,paddingBottom:24,paddingTop:12},
+badge:{position:'absolute',top:-6,right:-12,backgroundColor:'#FF8C00',borderRadius:9,minWidth:18,height:18,alignItems:'center',justifyContent:'center',paddingHorizontal:4},
+badgeText:{color:'#ffffff',fontSize:10,fontWeight:'700'},
 tab:{flex:1,alignItems:'center'},
 tabText:{color:COLORS.tabInactive,fontSize:10,fontWeight:'500'},
 tabActive:{color:COLORS.tabActive,fontWeight:'700'},

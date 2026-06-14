@@ -9,7 +9,7 @@ import{notifyNewMatch}from'../lib/notifications'
 const{width}=Dimensions.get('window')
 const CARD_SIZE=(width-48)/3
 
-type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string;is_online?:boolean;latitude?:number;longitude?:number}
+type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string;is_online?:boolean;latitude?:number;longitude?:number;is_premium?:boolean}
 
 export default function DiscoverScreen({onChat}:{onChat:(user:any)=>void}){
 const[users,setUsers]=useState<User[]>([])
@@ -50,16 +50,20 @@ const{data:blockData}=await supabase.from('blocks').select('blocked_id').eq('blo
 const blockedIds=blockData?blockData.map((b:any)=>b.blocked_id):[]
 if(filter==='favorites'){
 if(favIds.length===0){setUsers([]);setLoading(false);return}
-const{data}=await supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online').in('id',favIds)
+const{data}=await supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium').in('id',favIds)
 setUsers((data||[]).filter((u:User)=>!blockedIds.includes(u.id)))
 setLoading(false)
 return
 }
-let query=supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online').neq('id',user.id).eq('is_active',true).limit(99)
+let query=supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium').neq('id',user.id).eq('is_active',true).limit(99)
 if(filter==='nearby'&&myProfile?.location){query=query.ilike('location',`%${myProfile.location.split(',')[0].trim()}%`)}
 const{data,error}=await query
 if(error)Alert.alert('Error',error.message)
-else setUsers((data||[]).filter((u:User)=>!blockedIds.includes(u.id)))
+else{
+const filtered=(data||[]).filter((u:User)=>!blockedIds.includes(u.id))
+filtered.sort((a,b)=>(b.is_premium?1:0)-(a.is_premium?1:0))
+setUsers(filtered)
+}
 setLoading(false)
 }
 
@@ -85,6 +89,21 @@ setShowModal(false)
 ])
 }
 
+const handleReport=(reportedId:string,name:string)=>{
+Alert.alert('Report User','Why are you reporting '+name+'?',[
+{text:'Cancel',style:'cancel'},
+{text:'Inappropriate Photos',onPress:()=>submitReport(reportedId,'Inappropriate Photos')},
+{text:'Harassment',onPress:()=>submitReport(reportedId,'Harassment')},
+{text:'Fake Profile',onPress:()=>submitReport(reportedId,'Fake Profile')},
+{text:'Spam',onPress:()=>submitReport(reportedId,'Spam')},
+{text:'Other',onPress:()=>submitReport(reportedId,'Other')},
+])
+}
+const submitReport=async(reportedId:string,reason:string)=>{
+await supabase.from('reports').insert({reporter_id:currentUserId,reported_id:reportedId,reason})
+Alert.alert('Report Submitted','Thank you for helping keep Syde Vibe safe. Our team will review this report.')
+setShowModal(false)
+}
 const handleChat=(userId:string,user:any)=>{
 setShowModal(false)
 setTimeout(()=>onChat(user),300)
@@ -143,6 +162,7 @@ renderItem={({item})=>(
 :<View style={s.cardPlaceholder}><Text style={s.cardPlaceholderText}>{item.display_name?.[0]||'?'}</Text></View>}
 {favorites.has(item.id)&&<View style={s.favBadge}><Text style={s.favBadgeText}>⭐</Text></View>}
 {item.is_online&&<View style={s.onlineDot}/>}
+{item.is_premium&&<View style={s.premiumBadge}><Text style={s.premiumBadgeText}>💎</Text></View>}
 {(()=>{const d=getDistance(item as any);return d?<View style={s.distBadge}><Text style={s.distText}>{d}</Text></View>:null})()}
 </View>
 <Text style={s.cardTitle} numberOfLines={1}>{item.title||item.display_name}</Text>
@@ -158,6 +178,7 @@ onChat={handleChat}
 isFavorite={selectedUser?favorites.has(selectedUser.id):false}
 onToggleFavorite={handleToggleFavorite}
 onBlock={handleBlock}
+onReport={handleReport}
 />
 </View>
 )
@@ -187,5 +208,7 @@ subText:{color:'rgba(255,255,255,0.7)',fontSize:14,marginTop:8},
 distBadge:{position:'absolute',bottom:4,left:4,backgroundColor:'rgba(0,0,0,0.65)',borderRadius:8,paddingHorizontal:5,paddingVertical:2},
 distText:{color:'#ffffff',fontSize:9,fontWeight:'700'},
 onlineDot:{position:'absolute',top:6,left:6,width:10,height:10,borderRadius:5,backgroundColor:'#00E676',borderWidth:1.5,borderColor:'#ffffff'},
+premiumBadge:{position:'absolute',bottom:4,right:4,backgroundColor:'rgba(245,166,35,0.9)',borderRadius:8,paddingHorizontal:4,paddingVertical:1},
+premiumBadgeText:{fontSize:10},
 cardAge:{color:'rgba(255,255,255,0.6)',fontSize:9,textAlign:'center',width:CARD_SIZE},
 })

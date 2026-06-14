@@ -19,6 +19,7 @@ const{data}=await supabase.from('direct_messages').select('*')
 .or(`and(sender_id.eq.${user.id},recipient_id.eq.${otherUser.id}),and(sender_id.eq.${otherUser.id},recipient_id.eq.${user.id})`)
 .order('created_at',{ascending:true})
 setMessages(data||[])
+await supabase.from('direct_messages').update({read:true}).eq('sender_id',otherUser.id).eq('recipient_id',user.id).eq('read',false)
 const channel=supabase.channel('direct-'+otherUser.id)
 .on('postgres_changes',{event:'INSERT',schema:'public',table:'direct_messages'},payload=>{
 const msg=payload.new as Message
