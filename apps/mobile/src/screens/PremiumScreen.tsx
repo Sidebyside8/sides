@@ -15,7 +15,7 @@ setupPurchases().then(()=>{
 getPremiumProduct().then(p=>{
 setProduct(p)
 setLoading(false)
-if(!p)setError('Product not available. Make sure you are signed in with your Apple ID.')
+
 })
 })
 },[])
@@ -76,9 +76,11 @@ return(
 </>}
 </View>
 
-<TouchableOpacity style={[s.purchaseBtn,purchasing&&s.purchaseBtnDisabled]} onPress={handlePurchase} disabled={purchasing||loading}>
+{!loading&&!product?
+<View style={s.unavailableBox}><Text style={s.unavailableText}>Subscriptions are temporarily unavailable. Please check back soon.</Text></View>
+:<TouchableOpacity style={[s.purchaseBtn,purchasing&&s.purchaseBtnDisabled]} onPress={handlePurchase} disabled={purchasing||loading}>
 {purchasing?<ActivityIndicator color="#0A1628"/>:<Text style={s.purchaseBtnText}>Subscribe Now</Text>}
-</TouchableOpacity>
+</TouchableOpacity>}
 
 <TouchableOpacity style={s.restoreBtn} onPress={handleRestore} disabled={restoring}>
 {restoring?<ActivityIndicator color="rgba(255,255,255,0.7)" size="small"/>:<Text style={s.restoreBtnText}>Restore Purchases</Text>}
@@ -117,4 +119,6 @@ purchaseBtnText:{color:'#0A1628',fontSize:18,fontWeight:'900'},
 restoreBtn:{padding:12,marginBottom:16},
 restoreBtnText:{color:'rgba(255,255,255,0.6)',fontSize:14},
 legal:{color:'rgba(255,255,255,0.4)',fontSize:11,textAlign:'center',lineHeight:16,paddingHorizontal:16},
+unavailableBox:{backgroundColor:'rgba(255,255,255,0.1)',borderRadius:16,padding:18,width:'100%',alignItems:'center',marginBottom:12,borderWidth:1,borderColor:'rgba(255,255,255,0.2)'},
+unavailableText:{color:'rgba(255,255,255,0.7)',fontSize:14,textAlign:'center'},
 })

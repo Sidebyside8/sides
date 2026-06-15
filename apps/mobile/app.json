@@ -19,7 +19,8 @@
         "ITSAppUsesNonExemptEncryption": false,
         "NSUserNotificationUsageDescription": "Syde Vibe uses notifications to alert you about new matches and messages.",
         "NSCameraUsageDescription": "Syde Vibe needs camera access to take your profile photo.",
-        "NSPhotoLibraryUsageDescription": "Syde Vibe needs photo library access to upload your profile photo."
+        "NSPhotoLibraryUsageDescription": "Syde Vibe needs photo library access to upload your profile photo.",
+        "NSLocationWhenInUseUsageDescription": "Syde Vibe uses your precise location to show how far away other members are (for example, \"2.3 mi\" on their profile card) and to let you browse profiles of people near your current location in the Nearby tab."
       }
     },
     "android": {
