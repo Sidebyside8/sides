@@ -1,5 +1,5 @@
 import{useEffect,useState}from'react'
-import{View,Text,TouchableOpacity,StyleSheet,ScrollView,Alert,ActivityIndicator}from'react-native'
+import{View,Text,TouchableOpacity,StyleSheet,ScrollView,Alert,ActivityIndicator,Linking}from'react-native'
 import{LinearGradient}from'expo-linear-gradient'
 import{getPremiumProduct,purchasePremium,restorePurchases,setupPurchases}from'../lib/subscription'
 
@@ -86,7 +86,16 @@ return(
 {restoring?<ActivityIndicator color="rgba(255,255,255,0.7)" size="small"/>:<Text style={s.restoreBtnText}>Restore Purchases</Text>}
 </TouchableOpacity>
 
-<Text style={s.legal}>Subscription automatically renews monthly at $9.99 unless cancelled at least 24 hours before the end of the current period. Manage subscriptions in your Apple ID settings.</Text>
+<Text style={s.legal}>Syde Vibe Premium is a monthly auto-renewing subscription. Length: 1 month. Price: $9.99 USD per month. Subscription automatically renews unless cancelled at least 24 hours before the end of the current period. Manage or cancel anytime in your Apple ID settings.</Text>
+<View style={s.linksRow}>
+<TouchableOpacity onPress={()=>Linking.openURL('https://sidebyside8.github.io/sides/privacy.html')}>
+<Text style={s.linkText}>Privacy Policy</Text>
+</TouchableOpacity>
+<Text style={s.linkDivider}> · </Text>
+<TouchableOpacity onPress={()=>Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/')}>
+<Text style={s.linkText}>Terms of Use</Text>
+</TouchableOpacity>
+</View>
 </ScrollView>
 </LinearGradient>
 )
@@ -119,6 +128,9 @@ purchaseBtnText:{color:'#0A1628',fontSize:18,fontWeight:'900'},
 restoreBtn:{padding:12,marginBottom:16},
 restoreBtnText:{color:'rgba(255,255,255,0.6)',fontSize:14},
 legal:{color:'rgba(255,255,255,0.4)',fontSize:11,textAlign:'center',lineHeight:16,paddingHorizontal:16},
+linksRow:{flexDirection:'row',justifyContent:'center',marginTop:12,marginBottom:8},
+linkText:{color:'#7EC8F5',fontSize:12,fontWeight:'600'},
+linkDivider:{color:'rgba(255,255,255,0.4)',fontSize:12},
 unavailableBox:{backgroundColor:'rgba(255,255,255,0.1)',borderRadius:16,padding:18,width:'100%',alignItems:'center',marginBottom:12,borderWidth:1,borderColor:'rgba(255,255,255,0.2)'},
 unavailableText:{color:'rgba(255,255,255,0.7)',fontSize:14,textAlign:'center'},
 })
