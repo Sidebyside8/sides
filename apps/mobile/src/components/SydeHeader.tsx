@@ -2,17 +2,19 @@ import { View, Image, Text, StyleSheet, ReactNode } from 'react-native'
 
 interface Props {
   title: string
+  leftAction?: ReactNode
   rightAction?: ReactNode
 }
 
-export default function SydeHeader({ title, rightAction }: Props) {
+export default function SydeHeader({ title, leftAction, rightAction }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.left}>
         <Image source={require('../../assets/logo2.png')} style={styles.logo} resizeMode="contain" />
         <Text style={styles.title}>{title}</Text>
       </View>
-      {rightAction ? <View style={styles.right}>{rightAction}</View> : null}
+      {leftAction ? <View style={styles.left}>{leftAction}</View> : <View style={styles.left}/>}
+      {rightAction ? <View style={styles.right}>{rightAction}</View> : <View style={styles.right}/>}
     </View>
   )
 }

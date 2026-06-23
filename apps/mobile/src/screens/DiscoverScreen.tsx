@@ -21,6 +21,8 @@ const[favorites,setFavorites]=useState<Set<string>>(new Set())
 const[selectedUser,setSelectedUser]=useState<User|null>(null)
 const[showModal,setShowModal]=useState(false)
 const[myCoords,setMyCoords]=useState<{lat:number;lng:number}|null>(null)
+const[myProfile,setMyProfile]=useState<User|null>(null)
+const[showMyProfile,setShowMyProfile]=useState(false)
 
 useEffect(()=>{loadUsers()},[filter])
 
@@ -29,7 +31,9 @@ setLoading(true)
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
 setCurrentUserId(user.id)
-const{data:myProfile}=await supabase.from('users').select('location,latitude,longitude').eq('id',user.id).single()
+const{data:myProfileData}=await supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium').eq('id',user.id).single()
+if(myProfileData)setMyProfile(myProfileData as User)
+const myProfile=myProfileData
 try{
 const{status}=await Location.requestForegroundPermissionsAsync()
 if(status==='granted'){
@@ -131,7 +135,18 @@ setShowModal(true)
 
 return(
 <View style={s.container}>
-<SydeHeader title="Discover"/>
+<SydeHeader title="Discover"
+leftAction={
+<TouchableOpacity onPress={()=>setShowMyProfile(true)} style={{width:36,height:36,borderRadius:18,overflow:'hidden',borderWidth:2,borderColor:'rgba(255,255,255,0.5)'}}>
+{myProfile?.avatar_url?<Image source={{uri:myProfile.avatar_url}} style={{width:32,height:32,borderRadius:16}}/>
+:<View style={{width:32,height:32,borderRadius:16,backgroundColor:'#2196F3',alignItems:'center',justifyContent:'center'}}><Text style={{color:'#ffffff',fontSize:14,fontWeight:'bold'}}>{myProfile?.display_name?.[0]||'?'}</Text></View>}
+</TouchableOpacity>
+}
+rightAction={
+<TouchableOpacity onPress={loadUsers} style={{padding:8}}>
+<Text style={{color:'#ffffff',fontSize:16}}>↻</Text>
+</TouchableOpacity>
+}/>
 <View style={s.filterRow}>
 <TouchableOpacity style={[s.filterTab,filter==='nearby'&&s.filterTabActive]} onPress={()=>setFilter('nearby')}>
 <Text style={[s.filterText,filter==='nearby'&&s.filterTextActive]}>📍 Nearby</Text>
@@ -170,6 +185,15 @@ renderItem={({item})=>(
 </TouchableOpacity>
 )}
 />}
+<ProfileModal
+user={myProfile}
+visible={showMyProfile}
+onClose={()=>setShowMyProfile(false)}
+onChat={()=>{}}
+isFavorite={false}
+onToggleFavorite={()=>{}}
+onBlock={()=>{}}
+/>
 <ProfileModal
 user={selectedUser}
 visible={showModal}

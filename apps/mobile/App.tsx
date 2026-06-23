@@ -23,6 +23,7 @@ const[hasProfile,setHasProfile]=useState<boolean|null>(null)
 const[activeTab,setActiveTab]=useState<Tab>('discover')
 const[activeDirectMessage,setActiveDirectMessage]=useState<any|null>(null)
 const[unreadCount,setUnreadCount]=useState(0)
+const[discoverKey,setDiscoverKey]=useState(0)
 const[showPremium,setShowPremium]=useState(false)
 const[isPremium,setIsPremium]=useState(false)
 const profileChecked=useRef<string|null>(null)
@@ -80,16 +81,16 @@ if(activeDirectMessage)return<DirectMessageScreen otherUser={activeDirectMessage
 return(
 <LinearGradient colors={GRADIENT.colors} start={GRADIENT.start} end={GRADIENT.end} style={s.container}>
 <View style={s.content}>
-{activeTab==='discover'&&<DiscoverScreen onChat={(user)=>setActiveDirectMessage(user)}/>}
+{activeTab==='discover'&&<DiscoverScreen key={discoverKey} onChat={(user)=>setActiveDirectMessage(user)}/>}
 {activeTab==='messages'&&<MessagesListScreen onDirectMessage={(user)=>setActiveDirectMessage(user)}/>}
 {activeTab==='community'&&<CommunityScreen/>}
 {activeTab==='profile'&&<ProfileScreen onUpgrade={()=>setShowPremium(true)} isPremium={isPremium}/>}
 </View>
 <View style={s.tabBar}>
-<TouchableOpacity style={s.tab} onPress={()=>setActiveTab('discover')}>
+<TouchableOpacity style={s.tab} onPress={()=>{setActiveTab('discover');setDiscoverKey(k=>k+1)}}>
 <Text style={[s.tabText,activeTab==='discover'&&s.tabActive]}>Discover</Text>
 </TouchableOpacity>
-<TouchableOpacity style={s.tab} onPress={()=>setActiveTab('messages')}>
+<TouchableOpacity style={s.tab} onPress={()=>{setActiveTab('messages');setUnreadCount(0)}}>
 <View style={{position:'relative'}}>
 <Text style={[s.tabText,activeTab==='messages'&&s.tabActive]}>Messages</Text>
 {unreadCount>0&&<View style={s.badge}><Text style={s.badgeText}>{unreadCount>9?'9+':unreadCount}</Text></View>}

@@ -1,6 +1,7 @@
 import{useEffect,useState,useRef}from'react'
-import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,KeyboardAvoidingView,Platform,Image}from'react-native'
+import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,KeyboardAvoidingView,Platform,Image,ActivityIndicator,Alert}from'react-native'
 import{supabase}from'../lib/supabase'
+import{launchImageLibraryAsync,launchCameraAsync,requestMediaLibraryPermissionsAsync,requestCameraPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
 import{notifyNewMessage}from'../lib/notifications'
 type Message={id:string;sender_id:string;recipient_id:string;content:string;created_at:string}
 type OtherUser={id:string;display_name:string;username:string;avatar_url?:string}
@@ -9,6 +10,7 @@ const[messages,setMessages]=useState<Message[]>([])
 const[newMessage,setNewMessage]=useState('')
 const[currentUserId,setCurrentUserId]=useState<string|null>(null)
 const[sending,setSending]=useState(false)
+const[uploadingImage,setUploadingImage]=useState(false)
 const flatListRef=useRef<FlatList>(null)
 useEffect(()=>{loadMessages()},[])
 const loadMessages=async()=>{
@@ -28,6 +30,44 @@ setMessages(prev=>[...prev,msg])
 }
 }).subscribe()
 return()=>{supabase.removeChannel(channel)}
+}
+const uploadMessageImage=async(base64:string)=>{
+setUploadingImage(true)
+try{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+const fileName=user.id+'-msg-'+Date.now()+'.jpg'
+const uploadData=Uint8Array.from(atob(base64),c=>c.charCodeAt(0))
+const{error:ue}=await supabase.storage.from('avatars').upload(fileName,uploadData,{contentType:'image/jpeg',upsert:true})
+if(ue){Alert.alert('Upload failed',ue.message);setUploadingImage(false);return}
+const{data:ud}=supabase.storage.from('avatars').getPublicUrl(fileName)
+const{data,error}=await supabase.from('direct_messages').insert({
+sender_id:currentUserId,
+recipient_id:otherUser.id,
+content:'📷 Photo',
+image_url:ud.publicUrl
+}).select().single()
+if(!error&&data)setMessages(prev=>[...prev,data])
+setTimeout(()=>flatListRef.current?.scrollToEnd({animated:true}),100)
+}catch(e:any){Alert.alert('Error',e.message)}
+setUploadingImage(false)
+}
+const handleSendImage=async()=>{
+Alert.alert('Send Photo','Choose how to add your photo',[
+{text:'Take Photo',onPress:async()=>{
+const perm=await requestCameraPermissionsAsync()
+if(!perm.granted){Alert.alert('Permission needed','Please allow camera access');return}
+const result=await launchCameraAsync({allowsEditing:true,quality:0.7,base64:true})
+if(!result.canceled&&result.assets[0].base64)await uploadMessageImage(result.assets[0].base64)
+}},
+{text:'Choose from Library',onPress:async()=>{
+const perm=await requestMediaLibraryPermissionsAsync()
+if(!perm.granted){Alert.alert('Permission needed','Please allow photo library access');return}
+const result=await launchImageLibraryAsync({mediaTypes:MediaTypeOptions.Images,allowsEditing:true,quality:0.7,base64:true})
+if(!result.canceled&&result.assets[0].base64)await uploadMessageImage(result.assets[0].base64)
+}},
+{text:'Cancel',style:'cancel'}
+])
 }
 const handleSend=async()=>{
 if(!newMessage.trim()||!currentUserId)return
@@ -81,12 +121,16 @@ renderItem={({item})=>{
 const isMe=item.sender_id===currentUserId
 return(
 <View style={[s.bubble,isMe?s.myBubble:s.theirBubble]}>
-<Text style={[s.bubbleText,isMe?s.myText:s.theirText]}>{item.content}</Text>
+{(item as any).image_url?<Image source={{uri:(item as any).image_url}} style={{width:200,height:200,borderRadius:12,marginBottom:4}}/>:null}
+{item.content!=='📷 Photo'&&<Text style={[s.bubbleText,isMe?s.myText:s.theirText]}>{item.content}</Text>}
 <Text style={s.timeText}>{timeAgo(item.created_at)}</Text>
 </View>
 )
 }}/>
 <View style={s.inputRow}>
+<TouchableOpacity style={s.imageBtn} onPress={handleSendImage} disabled={uploadingImage}>
+{uploadingImage?<ActivityIndicator color="#ffffff" size="small"/>:<Text style={s.imageBtnText}>📷</Text>}
+</TouchableOpacity>
 <TextInput style={s.input} placeholder="Message..." placeholderTextColor="rgba(10,22,40,0.4)"
 value={newMessage} onChangeText={setNewMessage} multiline
 returnKeyType="send" onSubmitEditing={handleSend}/>
@@ -121,6 +165,8 @@ theirText:{color:'#0A1628'},
 timeText:{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:4,alignSelf:'flex-end'},
 inputRow:{flexDirection:'row',alignItems:'flex-end',padding:12,backgroundColor:'rgba(0,0,0,0.3)'},
 input:{flex:1,backgroundColor:'rgba(255,255,255,0.95)',borderRadius:20,paddingHorizontal:16,paddingVertical:10,color:'#0A1628',fontSize:15,maxHeight:100,marginRight:8,borderWidth:1,borderColor:'rgba(255,255,255,0.3)'},
+imageBtn:{backgroundColor:'rgba(255,255,255,0.2)',borderRadius:20,width:40,height:40,alignItems:'center',justifyContent:'center',marginRight:8},
+imageBtnText:{fontSize:20},
 sendBtn:{backgroundColor:'#2196F3',borderRadius:20,paddingHorizontal:16,paddingVertical:10},
 sendDisabled:{backgroundColor:'rgba(33,150,243,0.3)'},
 sendText:{color:'#ffffff',fontWeight:'600'},

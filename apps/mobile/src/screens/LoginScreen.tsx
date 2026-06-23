@@ -82,7 +82,7 @@ export default function LoginScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor="#888"
+                placeholderTextColor="rgba(10,22,40,0.4)"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -92,7 +92,7 @@ export default function LoginScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Password"
-                placeholderTextColor="#888"
+                placeholderTextColor="rgba(10,22,40,0.4)"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -123,7 +123,7 @@ export default function LoginScreen() {
                 <TextInput
                   style={styles.dobInput}
                   placeholder="MM/DD/YYYY"
-                  placeholderTextColor="#888"
+                  placeholderTextColor="rgba(10,22,40,0.4)"
                   value={dob}
                   onChangeText={setDob}
                   keyboardType="numbers-and-punctuation"
@@ -170,8 +170,8 @@ const styles = StyleSheet.create({
   tagline: { fontSize: 16, color: '#ffffff', marginBottom: 40, fontWeight: '500' },
   error: { color: '#cc2200', marginBottom: 12, fontSize: 14, textAlign: 'center' },
   input: {
-    width: '100%', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 12,
-    padding: 16, color: '#ffffff', fontSize: 16, marginBottom: 12,
+    width: '100%', backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 12,
+    padding: 16, color: '#0A1628', fontSize: 16, marginBottom: 12,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)',
   },
   button: { width: '100%', backgroundColor: '#2196F3', borderRadius: 12, padding: 16, alignItems: 'center', marginTop: 8 },
@@ -182,18 +182,18 @@ const styles = StyleSheet.create({
   modalContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   modalLogo: { width: 100, height: 100, marginBottom: 24 },
   modalTitle: { fontSize: 26, fontWeight: 'bold', color: '#ffffff', marginBottom: 8 },
-  modalSubtitle: { fontSize: 15, color: '#556677', marginBottom: 32, textAlign: 'center' },
-  dobLabel: { fontSize: 14, color: '#445566', fontWeight: '600', marginBottom: 8, alignSelf: 'flex-start', width: '100%' },
+  modalSubtitle: { fontSize: 15, color: 'rgba(255,255,255,0.8)', marginBottom: 32, textAlign: 'center' },
+  dobLabel: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontWeight: '600', marginBottom: 8, alignSelf: 'flex-start', width: '100%' },
   dobInput: {
-    width: '100%', backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 12,
-    padding: 16, color: '#ffffff', fontSize: 18, marginBottom: 24,
+    width: '100%', backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 12,
+    padding: 16, color: '#0A1628', fontSize: 18, marginBottom: 24,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', textAlign: 'center', letterSpacing: 2,
   },
   checkboxRow: { flexDirection: 'row', alignItems: 'center', width: '100%', marginBottom: 24 },
   checkbox: {
     width: 24, height: 24, borderRadius: 6, borderWidth: 2,
     borderColor: '#2196F3', marginRight: 12, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    backgroundColor: 'rgba(255,255,255,0.95)',
   },
   checkboxChecked: { backgroundColor: '#2196F3' },
   checkmark: { color: '#ffffff', fontSize: 14, fontWeight: 'bold' },
