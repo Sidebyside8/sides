@@ -23,6 +23,7 @@ const[showModal,setShowModal]=useState(false)
 const[myCoords,setMyCoords]=useState<{lat:number;lng:number}|null>(null)
 const[myProfile,setMyProfile]=useState<User|null>(null)
 const[showMyProfile,setShowMyProfile]=useState(false)
+const PROMO_BANNER='🎉 First 50 Premium subscribers get 1 month FREE! Comment PREMIUM on Instagram @sydevibe'
 
 useEffect(()=>{loadUsers()},[filter])
 
@@ -60,13 +61,28 @@ setLoading(false)
 return
 }
 let query=supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium').neq('id',user.id).eq('is_active',true).limit(99)
-if(filter==='nearby'&&myProfile?.location){query=query.ilike('location',`%${myProfile.location.split(',')[0].trim()}%`)}
+// nearby filter handled after fetch
 const{data,error}=await query
 if(error)Alert.alert('Error',error.message)
 else{
 const filtered=(data||[]).filter((u:User)=>!blockedIds.includes(u.id))
-filtered.sort((a,b)=>(b.is_premium?1:0)-(a.is_premium?1:0))
-setUsers(filtered)
+const withDist=filtered.map((u:User)=>{
+if(myCoords&&u.latitude&&u.longitude){
+const R=3958.8
+const dLat=(u.latitude-myCoords.lat)*Math.PI/180
+const dLon=(u.longitude-myCoords.lng)*Math.PI/180
+const a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(myCoords.lat*Math.PI/180)*Math.cos(u.latitude*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2)
+const dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))
+return{...u,_dist:dist}
+}
+return{...u,_dist:9999}
+})
+const nearbyFiltered=filter==='nearby'?withDist.filter((u:any)=>u._dist<=200):withDist
+nearbyFiltered.sort((a:any,b:any)=>{
+if(b.is_premium!==a.is_premium)return(b.is_premium?1:0)-(a.is_premium?1:0)
+return a._dist-b._dist
+})
+setUsers(nearbyFiltered)
 }
 setLoading(false)
 }
@@ -147,6 +163,9 @@ rightAction={
 <Text style={{color:'#ffffff',fontSize:16}}>↻</Text>
 </TouchableOpacity>
 }/>
+<TouchableOpacity style={s.promoBanner}>
+<Text style={s.promoBannerText}>{PROMO_BANNER}</Text>
+</TouchableOpacity>
 <View style={s.filterRow}>
 <TouchableOpacity style={[s.filterTab,filter==='nearby'&&s.filterTabActive]} onPress={()=>setFilter('nearby')}>
 <Text style={[s.filterText,filter==='nearby'&&s.filterTextActive]}>📍 Nearby</Text>
@@ -209,6 +228,8 @@ onReport={handleReport}
 }
 const s=StyleSheet.create({
 container:{flex:1},
+promoBanner:{backgroundColor:'rgba(245,166,35,0.2)',marginHorizontal:16,marginBottom:8,borderRadius:10,padding:10,borderWidth:1,borderColor:'rgba(245,166,35,0.5)'},
+promoBannerText:{color:'#F5A623',fontSize:12,textAlign:'center'},
 filterRow:{flexDirection:'row',marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:4},
 filterTab:{flex:1,paddingVertical:8,alignItems:'center',borderRadius:10},
 filterTabActive:{backgroundColor:'#2196F3'},

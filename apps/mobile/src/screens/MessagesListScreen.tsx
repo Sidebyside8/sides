@@ -1,11 +1,14 @@
 import{useEffect,useState}from'react'
 import{View,Text,TouchableOpacity,StyleSheet,FlatList,Image}from'react-native'
 import{supabase}from'../lib/supabase'
+import ProfileModal from'../components/ProfileModal'
 import SydeHeader from'../components/SydeHeader'
 type Conversation={userId:string;otherUser:{id:string;display_name:string;username:string;avatar_url?:string};lastMessage:string;lastTime:string}
 export default function MessagesListScreen({onDirectMessage}:{onDirectMessage:(user:any)=>void}){
 const[convos,setConvos]=useState<Conversation[]>([])
 const[loading,setLoading]=useState(true)
+const[selectedProfile,setSelectedProfile]=useState<any>(null)
+const[showProfile,setShowProfile]=useState(false)
 useEffect(()=>{loadConversations()},[])
 const loadConversations=async()=>{
 const{data:{user}}=await supabase.auth.getUser()

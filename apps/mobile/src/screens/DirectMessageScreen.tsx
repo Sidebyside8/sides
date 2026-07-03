@@ -1,6 +1,7 @@
 import{useEffect,useState,useRef}from'react'
 import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,KeyboardAvoidingView,Platform,Image,ActivityIndicator,Alert}from'react-native'
 import{supabase}from'../lib/supabase'
+import ProfileModal from'../components/ProfileModal'
 import{launchImageLibraryAsync,launchCameraAsync,requestMediaLibraryPermissionsAsync,requestCameraPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
 import{notifyNewMessage}from'../lib/notifications'
 type Message={id:string;sender_id:string;recipient_id:string;content:string;created_at:string}
@@ -11,6 +12,7 @@ const[newMessage,setNewMessage]=useState('')
 const[currentUserId,setCurrentUserId]=useState<string|null>(null)
 const[sending,setSending]=useState(false)
 const[uploadingImage,setUploadingImage]=useState(false)
+const[showOtherProfile,setShowOtherProfile]=useState(false)
 const flatListRef=useRef<FlatList>(null)
 useEffect(()=>{loadMessages()},[])
 const loadMessages=async()=>{
@@ -48,7 +50,7 @@ content:'📷 Photo',
 image_url:ud.publicUrl
 }).select().single()
 if(!error&&data)setMessages(prev=>[...prev,data])
-setTimeout(()=>flatListRef.current?.scrollToEnd({animated:true}),100)
+flatListRef.current?.scrollToEnd({animated:true})
 }catch(e:any){Alert.alert('Error',e.message)}
 setUploadingImage(false)
 }
@@ -88,7 +90,7 @@ await notifyNewMessage(otherUser.id,myProfile?.display_name||'Someone',content)
 }catch(e){}
 }
 setSending(false)
-setTimeout(()=>flatListRef.current?.scrollToEnd({animated:true}),100)
+flatListRef.current?.scrollToEnd({animated:true})
 }
 const timeAgo=(d:string)=>{
 const m=Math.floor((Date.now()-new Date(d).getTime())/60000)
@@ -108,7 +110,7 @@ return(
 {otherUser.avatar_url?<Image source={{uri:otherUser.avatar_url}} style={s.headerAvatar}/>
 :<View style={s.headerAvatarPlaceholder}><Text style={s.headerAvatarText}>{otherUser.display_name?.[0]||'?'}</Text></View>}
 <View>
-<Text style={s.headerName}>{otherUser.display_name}</Text>
+<TouchableOpacity onPress={()=>setShowOtherProfile(true)}><Text style={s.headerName}>{otherUser.display_name}</Text></TouchableOpacity>
 <Text style={s.headerUsername}>@{otherUser.username}</Text>
 </View>
 </View>
@@ -139,6 +141,7 @@ onPress={handleSend} disabled={!newMessage.trim()||sending}>
 <Text style={s.sendText}>Send</Text>
 </TouchableOpacity>
 </View>
+<ProfileModal user={otherUser} visible={showOtherProfile} onClose={()=>setShowOtherProfile(false)} onChat={()=>{}} isFavorite={false} onToggleFavorite={()=>{}} onBlock={()=>{}}/>
 </KeyboardAvoidingView>
 )
 }
@@ -157,7 +160,7 @@ messagesList:{padding:16,paddingBottom:8},
 empty:{flex:1,alignItems:'center',justifyContent:'center',paddingTop:60},
 emptyText:{color:'rgba(255,255,255,0.5)',fontSize:16,textAlign:'center',lineHeight:24},
 bubble:{maxWidth:'75%',borderRadius:20,padding:12,marginBottom:8},
-myBubble:{backgroundColor:'#2196F3',alignSelf:'flex-end',borderBottomRightRadius:4},
+myBubble:{backgroundColor:'#FF8C00',alignSelf:'flex-end',borderBottomRightRadius:4},
 theirBubble:{backgroundColor:'rgba(255,255,255,0.95)',alignSelf:'flex-start',borderBottomLeftRadius:4},
 bubbleText:{fontSize:15},
 myText:{color:'#ffffff'},
