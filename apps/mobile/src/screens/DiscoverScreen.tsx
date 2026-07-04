@@ -77,7 +77,7 @@ return{...u,_dist:dist}
 }
 return{...u,_dist:9999}
 })
-const nearbyFiltered=filter==='nearby'?withDist.filter((u:any)=>u._dist<=200):withDist
+const nearbyFiltered=filter==='nearby'?withDist.filter((u:any)=>u._dist<=200||u._dist===9999):withDist
 nearbyFiltered.sort((a:any,b:any)=>{
 if(b.is_premium!==a.is_premium)return(b.is_premium?1:0)-(a.is_premium?1:0)
 return a._dist-b._dist
@@ -180,7 +180,7 @@ rightAction={
 {filter==='nearby'&&!currentLocation&&<View style={s.banner}><Text style={s.bannerText}>Add your location in Profile to see nearby people</Text></View>}
 {loading?<View style={s.center}><Text style={s.loadingText}>Finding people...</Text></View>
 :users.length===0?<View style={s.center}>
-<Text style={s.loadingText}>{filter==='favorites'?'No saved profiles yet':filter==='nearby'?'No one nearby yet':'No one here yet'}</Text>
+<Text style={s.loadingText}>{filter==='favorites'?'No saved profiles yet':filter==='nearby'?'No one within 200 miles yet — try Global!':'No one here yet'}</Text>
 <Text style={s.subText}>{filter==='favorites'?'Star profiles to save them here':filter==='nearby'?'Try switching to Global':'Check back soon!'}</Text>
 </View>
 :<FlatList
