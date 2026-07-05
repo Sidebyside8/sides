@@ -1,5 +1,6 @@
 import{useEffect,useState,useRef}from'react'
 import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,KeyboardAvoidingView,Platform,Image,ActivityIndicator,Alert}from'react-native'
+import{LinearGradient}from'expo-linear-gradient'
 import{supabase}from'../lib/supabase'
 import ProfileModal from'../components/ProfileModal'
 import{launchImageLibraryAsync,launchCameraAsync,requestMediaLibraryPermissionsAsync,requestCameraPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
@@ -164,9 +165,9 @@ myBubble:{backgroundColor:'#FF8C00',alignSelf:'flex-end',borderBottomRightRadius
 theirBubble:{backgroundColor:'#1B6CA8',alignSelf:'flex-start',borderBottomLeftRadius:4},
 bubbleText:{fontSize:15},
 myText:{color:'#ffffff'},
-theirText:{color:'#0A1628'},
+theirText:{color:'#ffffff'},
 timeText:{fontSize:10,color:'rgba(255,255,255,0.5)',marginTop:4,alignSelf:'flex-end'},
-inputRow:{flexDirection:'row',alignItems:'flex-end',padding:12,backgroundColor:'rgba(0,0,0,0.3)'},
+inputRow:{flexDirection:'row',padding:12,backgroundColor:'rgba(255,255,255,0.05)',borderTopWidth:1,borderTopColor:'rgba(255,255,255,0.1)'},
 input:{flex:1,backgroundColor:'rgba(255,255,255,0.95)',borderRadius:20,paddingHorizontal:16,paddingVertical:10,color:'#0A1628',fontSize:15,maxHeight:100,marginRight:8,borderWidth:1,borderColor:'rgba(255,255,255,0.3)'},
 imageBtn:{backgroundColor:'rgba(255,255,255,0.2)',borderRadius:20,width:40,height:40,alignItems:'center',justifyContent:'center',marginRight:8},
 imageBtnText:{fontSize:20},

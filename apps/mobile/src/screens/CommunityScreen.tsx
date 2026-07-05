@@ -1,4 +1,5 @@
 import{useEffect,useState}from'react'
+import DateTimePicker from'@react-native-community/datetimepicker'
 import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,Alert,KeyboardAvoidingView,Platform,Modal,ScrollView,Image}from'react-native'
 import{supabase}from'../lib/supabase'
 import SydeHeader from'../components/SydeHeader'
@@ -19,6 +20,8 @@ const[eventTitle,setEventTitle]=useState('')
 const[eventDesc,setEventDesc]=useState('')
 const[eventLocation,setEventLocation]=useState('')
 const[eventDate,setEventDate]=useState('')
+const[selectedDate,setSelectedDate]=useState(new Date())
+const[showDatePicker,setShowDatePicker]=useState(false)
 useEffect(()=>{loadContent()},[tab])
 const loadContent=async()=>{
 setLoading(true)
@@ -59,15 +62,14 @@ setPosting(false)
 }
 const handleCreateEvent=async()=>{
 if(!eventTitle.trim()||!eventDate.trim()){Alert.alert('Required','Please enter a title and date');return}
-const parsedDate=new Date(eventDate)
-if(isNaN(parsedDate.getTime())){Alert.alert('Invalid','Please enter a valid date (e.g. 2025-12-25)');return}
+const parsedDate=selectedDate
 setPosting(true)
 const{data,error}=await supabase.from('events').insert({
 user_id:currentUserId,
 title:eventTitle.trim(),
 description:eventDesc.trim(),
 location:eventLocation.trim(),
-event_date:parsedDate.toISOString(),
+event_date:selectedDate.toISOString(),
 }).select().single()
 if(error){Alert.alert('Error',error.message)}else{
 const{data:author}=await supabase.from('users').select('display_name,username').eq('id',currentUserId).single()
@@ -161,7 +163,10 @@ renderItem={({item})=>(
 <Text style={s.inputLabel}>Event Title *</Text>
 <TextInput style={s.input} placeholder="e.g. Syde Meetup NYC" placeholderTextColor='rgba(255,255,255,0.9)' value={eventTitle} onChangeText={setEventTitle}/>
 <Text style={s.inputLabel}>Date & Time * (YYYY-MM-DD HH:MM)</Text>
-<TextInput style={s.input} placeholder="e.g. 2025-12-25 18:00" placeholderTextColor='rgba(255,255,255,0.9)' value={eventDate} onChangeText={setEventDate}/>
+<TouchableOpacity style={{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,marginBottom:12}} onPress={()=>setShowDatePicker(true)}>
+<Text style={{color:'#ffffff',fontSize:16}}>{selectedDate.toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'})}</Text>
+</TouchableOpacity>
+{showDatePicker&&<DateTimePicker value={selectedDate} mode="date" display="default" minimumDate={new Date()} onChange={(_e:any,d?:Date)=>{setShowDatePicker(false);if(d){setSelectedDate(d);setEventDate(d.toISOString())}}}/>}
 <Text style={s.inputLabel}>Location</Text>
 <TextInput style={s.input} placeholder="e.g. New York, NY" placeholderTextColor='rgba(255,255,255,0.9)' value={eventLocation} onChangeText={setEventLocation}/>
 <Text style={s.inputLabel}>Description</Text>
