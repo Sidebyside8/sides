@@ -163,9 +163,7 @@ rightAction={
 <Text style={{color:'#ffffff',fontSize:16}}>↻</Text>
 </TouchableOpacity>
 }/>
-<TouchableOpacity style={s.promoBanner}>
-<Text style={s.promoBannerText}>{PROMO_BANNER}</Text>
-</TouchableOpacity>
+
 <View style={s.filterRow}>
 <TouchableOpacity style={[s.filterTab,filter==='nearby'&&s.filterTabActive]} onPress={()=>setFilter('nearby')}>
 <Text style={[s.filterText,filter==='nearby'&&s.filterTextActive]}>📍 Nearby</Text>
