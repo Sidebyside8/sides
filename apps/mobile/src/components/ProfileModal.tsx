@@ -1,5 +1,5 @@
 import{useState,useEffect}from'react'
-import{View,Text,TouchableOpacity,StyleSheet,Modal,ScrollView,Image,Alert}from'react-native'
+import{View,Text,TouchableOpacity,StyleSheet,Modal,ScrollView,Image,Alert,Modal as RNModal}from'react-native'
 import{supabase}from'../lib/supabase'
 
 type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string}
@@ -25,7 +25,7 @@ return(
 </View>
 <ScrollView contentContainerStyle={s.content}>
 <View style={s.photoSection}>
-{user.avatar_url?<Image source={{uri:user.avatar_url}} style={s.photo}/>:<View style={s.photoPlaceholder}><Text style={s.photoPlaceholderText}>{user.display_name?.[0]||'?'}</Text></View>}
+{user.avatar_url?<TouchableOpacity onPress={()=>setZoomPhoto(user.avatar_url||null)}><Image source={{uri:user.avatar_url}} style={s.photo}/></TouchableOpacity>:<View style={s.photoPlaceholder}><Text style={s.photoPlaceholderText}>{user.display_name?.[0]||'?'}</Text></View>}
 <View style={s.actions}>
 <TouchableOpacity style={[s.actionBtn,isFavorite&&s.actionBtnActive]} onPress={()=>onToggleFavorite(user.id)}>
 <Text style={s.actionIcon}>⭐</Text>
@@ -42,7 +42,7 @@ return(
 </View>
 </View>
 {photos.length>1&&<ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.photosStrip} contentContainerStyle={{gap:4,padding:8}}>
-{photos.map(p=><TouchableOpacity key={p.id}><Image source={{uri:p.photo_url}} style={s.stripPhoto}/></TouchableOpacity>)}
+{photos.map(p=><TouchableOpacity key={p.id} onPress={()=>setZoomPhoto(p.photo_url)}><Image source={{uri:p.photo_url}} style={s.stripPhoto}/></TouchableOpacity>)}
 </ScrollView>}
 <View style={s.info}>
 <Text style={s.name}>{user.display_name}</Text>

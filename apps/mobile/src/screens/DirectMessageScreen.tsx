@@ -108,8 +108,7 @@ return(
 <Text style={s.backText}>‹ Back</Text>
 </TouchableOpacity>
 <View style={s.headerInfo}>
-{otherUser.avatar_url?<Image source={{uri:otherUser.avatar_url}} style={s.headerAvatar}/>
-:<View style={s.headerAvatarPlaceholder}><Text style={s.headerAvatarText}>{otherUser.display_name?.[0]||'?'}</Text></View>}
+<TouchableOpacity onPress={()=>setShowOtherProfile(true)}>{otherUser.avatar_url?<Image source={{uri:otherUser.avatar_url}} style={s.headerAvatar}/>:<View style={s.headerAvatarPlaceholder}><Text style={s.headerAvatarText}>{otherUser.display_name?.[0]||'?'}</Text></View>}</TouchableOpacity>
 <View>
 <TouchableOpacity onPress={()=>setShowOtherProfile(true)}><Text style={s.headerName}>{otherUser.display_name}</Text></TouchableOpacity>
 <Text style={s.headerUsername}>@{otherUser.username}</Text>
