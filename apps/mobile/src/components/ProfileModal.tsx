@@ -1,5 +1,5 @@
 import{useState,useEffect}from'react'
-import{View,Text,TouchableOpacity,StyleSheet,Modal,ScrollView,Image,Alert,Modal as RNModal}from'react-native'
+import{View,Text,TouchableOpacity,StyleSheet,Modal,ScrollView,Image,Alert}from'react-native'
 import{supabase}from'../lib/supabase'
 
 type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string}
@@ -9,6 +9,7 @@ user:User|null;visible:boolean;onClose:()=>void;onChat:(userId:string,user:User)
 isFavorite:boolean;onToggleFavorite:(userId:string)=>void;onBlock:(userId:string,name:string)=>void;onReport?:(userId:string,name:string)=>void
 }){
 const[photos,setPhotos]=useState<{id:string;photo_url:string;is_profile:boolean}[]>([])
+const[zoomPhoto,setZoomPhoto]=useState<string|null>(null)
 useEffect(()=>{
 if(user&&visible){
 supabase.from('user_photos').select('*').eq('user_id',user.id).order('created_at',{ascending:true}).then(({data})=>setPhotos(data||[]))
@@ -65,6 +66,12 @@ return(
 </View>:null}
 </ScrollView>
 </View>
+<Modal visible={!!zoomPhoto} transparent animationType="fade">
+<TouchableOpacity style={{flex:1,backgroundColor:'rgba(0,0,0,0.95)',alignItems:'center',justifyContent:'center'}} onPress={()=>setZoomPhoto(null)}>
+<Image source={{uri:zoomPhoto}} style={{width:'95%',height:'70%',resizeMode:'contain'}}/>
+<Text style={{color:'rgba(255,255,255,0.5)',marginTop:20,fontSize:14}}>Tap to close</Text>
+</TouchableOpacity>
+</Modal>
 </Modal>
 )
 }
