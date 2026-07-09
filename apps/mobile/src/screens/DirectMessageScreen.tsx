@@ -15,7 +15,12 @@ const[sending,setSending]=useState(false)
 const[uploadingImage,setUploadingImage]=useState(false)
 const[showOtherProfile,setShowOtherProfile]=useState(false)
 const flatListRef=useRef<FlatList>(null)
-useEffect(()=>{loadMessages()},[])
+useEffect(()=>{loadMessages();markMessagesRead()},[])
+const markMessagesRead=async()=>{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+await supabase.from('direct_messages').update({read_at:new Date().toISOString()}).eq('recipient_id',user.id).eq('sender_id',otherUser.id).is('read_at',null)
+}
 const loadMessages=async()=>{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return

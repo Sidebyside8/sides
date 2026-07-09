@@ -14,8 +14,9 @@ import MessagesListScreen from'./src/screens/MessagesListScreen'
 import DirectMessageScreen from'./src/screens/DirectMessageScreen'
 import CommunityScreen from'./src/screens/CommunityScreen'
 import ProfileScreen from'./src/screens/ProfileScreen'
+import WhoViewedMeScreen from'./src/screens/WhoViewedMeScreen'
 import PremiumScreen from'./src/screens/PremiumScreen'
-type Tab='discover'|'messages'|'community'|'profile'
+type Tab='discover'|'messages'|'community'|'profile'|'viewed'
 export default function App(){
 const[session,setSession]=useState<Session|null>(null)
 const[initialized,setInitialized]=useState(false)
@@ -85,6 +86,7 @@ return(
 {activeTab==='messages'&&<MessagesListScreen onDirectMessage={(user)=>setActiveDirectMessage(user)}/>}
 {activeTab==='community'&&<CommunityScreen/>}
 {activeTab==='profile'&&<ProfileScreen onUpgrade={()=>setShowPremium(true)} isPremium={isPremium}/>}
+{activeTab==='viewed'&&<WhoViewedMeScreen onClose={()=>setActiveTab('profile')}/>}
 </View>
 <View style={s.tabBar}>
 <TouchableOpacity style={s.tab} onPress={()=>{setActiveTab('discover');setDiscoverKey(k=>k+1)}}>
@@ -98,6 +100,9 @@ return(
 </TouchableOpacity>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('community')}>
 <Text style={[s.tabText,activeTab==='community'&&s.tabActive]}>Community</Text>
+</TouchableOpacity>
+<TouchableOpacity style={s.tab} onPress={()=>setActiveTab('viewed')}>
+<Text style={[s.tabText,activeTab==='viewed'&&s.tabActive]}>👁️ Viewed</Text>
 </TouchableOpacity>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('profile')}>
 <Text style={[s.tabText,activeTab==='profile'&&s.tabActive]}>Profile</Text>
