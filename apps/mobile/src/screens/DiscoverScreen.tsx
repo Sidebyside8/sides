@@ -27,7 +27,7 @@ type User = {
   is_premium?: boolean
 }
 
-export default function DiscoverScreen({ onChat }: { onChat: (user: any) => void }) {
+export default function DiscoverScreen({ onChat, setActiveTab }: { onChat: (user: any) => void; setActiveTab?: (tab: string) => void }) {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
@@ -222,9 +222,14 @@ export default function DiscoverScreen({ onChat }: { onChat: (user: any) => void
           </TouchableOpacity>
         }
         rightAction={
-          <TouchableOpacity onPress={loadUsers} style={{ padding: 8 }}>
-            <Text style={{ color: '#ffffff', fontSize: 16 }}>↻</Text>
-          </TouchableOpacity>
+          <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+            <TouchableOpacity onPress={()=>setActiveTab&&setActiveTab('viewed')} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
+              <Text style={{fontSize:18}}>👁️</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={loadUsers} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
+              <Text style={{color:'#ffffff',fontSize:16}}>↻</Text>
+            </TouchableOpacity>
+          </View>
         }
       />
 

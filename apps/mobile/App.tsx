@@ -82,7 +82,7 @@ if(activeDirectMessage)return<DirectMessageScreen otherUser={activeDirectMessage
 return(
 <LinearGradient colors={GRADIENT.colors} start={GRADIENT.start} end={GRADIENT.end} style={s.container}>
 <View style={s.content}>
-{activeTab==='discover'&&<DiscoverScreen key={discoverKey} onChat={(user)=>setActiveDirectMessage(user)}/>}
+{activeTab==='discover'&&<DiscoverScreen key={discoverKey} onChat={(user)=>setActiveDirectMessage(user)} setActiveTab={(tab:string)=>setActiveTab(tab as Tab)}/>}
 {activeTab==='messages'&&<MessagesListScreen onDirectMessage={(user)=>setActiveDirectMessage(user)}/>}
 {activeTab==='community'&&<CommunityScreen/>}
 {activeTab==='profile'&&<ProfileScreen onUpgrade={()=>setShowPremium(true)} isPremium={isPremium}/>}
@@ -114,10 +114,10 @@ return(
 const s=StyleSheet.create({
 container:{flex:1},
 content:{flex:1},
-tabBar:{flexDirection:'row',backgroundColor:COLORS.tabBar,borderTopWidth:1,borderTopColor:COLORS.tabBarBorder,paddingBottom:24,paddingTop:12},
+tabBar:{flexDirection:'row',backgroundColor:COLORS.tabBar,borderTopWidth:1,borderTopColor:COLORS.tabBarBorder,paddingBottom:8,paddingTop:8},
 badge:{position:'absolute',top:-6,right:-12,backgroundColor:'#FF8C00',borderRadius:9,minWidth:18,height:18,alignItems:'center',justifyContent:'center',paddingHorizontal:4},
 badgeText:{color:'#ffffff',fontSize:10,fontWeight:'700'},
-tab:{flex:1,alignItems:'center'},
+tab:{flex:1,alignItems:'center',justifyContent:'center',height:44},
 tabText:{color:COLORS.tabInactive,fontSize:10,fontWeight:'500'},
 tabActive:{color:COLORS.tabActive,fontWeight:'700'},
 })
