@@ -19,7 +19,7 @@ useEffect(()=>{loadMessages();markMessagesRead()},[])
 const markMessagesRead=async()=>{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
-await supabase.from('direct_messages').update({read_at:new Date().toISOString()}).eq('recipient_id',user.id).eq('sender_id',otherUser.id).is('read_at',null)
+if(user)await supabase.from('direct_messages').update({read_at:new Date().toISOString()}).eq('recipient_id',user.id).eq('sender_id',otherUser.id).is('read_at',null)
 }
 const loadMessages=async()=>{
 const{data:{user}}=await supabase.auth.getUser()
@@ -91,6 +91,7 @@ if(!error&&data){
 setMessages(prev=>[...prev,data])
 try{
 const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
 const{data:myProfile}=await supabase.from('users').select('display_name').eq('id',user.id).single()
 await notifyNewMessage(otherUser.id,myProfile?.display_name||'Someone',content)
 }catch(e){}
@@ -146,7 +147,7 @@ onPress={handleSend} disabled={!newMessage.trim()||sending}>
 <Text style={s.sendText}>Send</Text>
 </TouchableOpacity>
 </View>
-<ProfileModal user={otherUser} visible={showOtherProfile} onClose={()=>setShowOtherProfile(false)} onChat={()=>{}} isFavorite={false} onToggleFavorite={()=>{}} onBlock={()=>{}}/>
+<ProfileModal user={otherUser as any} visible={showOtherProfile} onClose={()=>setShowOtherProfile(false)} onChat={()=>{}} isFavorite={false} onToggleFavorite={()=>{}} onBlock={()=>{}}/>
 </KeyboardAvoidingView>
 )
 }

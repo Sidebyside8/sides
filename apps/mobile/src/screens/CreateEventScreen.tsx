@@ -38,7 +38,7 @@ const{error:ue}=await supabase.storage.from('avatars').upload(fileName,uploadDat
 if(!ue){const{data:ud}=supabase.storage.from('avatars').getPublicUrl(fileName);imageUrl=ud.publicUrl}
 setUploadingImage(false)
 }
-const{error}=await supabase.from('events').insert({user_id:user.id,title:title.trim(),description:description.trim(),location:location.trim(),event_date:date.toISOString(),image_url:imageUrl})
+const{error}=await supabase.from('events').insert({user_id:user.id,title:title.trim(),description:description.trim(),location:location.trim(),event_date:new Date(date).toISOString(),image_url:imageUrl})
 if(error){Alert.alert('Error',error.message);setSaving(false);return}
 Alert.alert('Event Created!','Your event has been posted to the community.')
 onCreated()

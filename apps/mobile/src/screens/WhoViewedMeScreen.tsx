@@ -27,8 +27,9 @@ const viewerIds=data.map((v:any)=>v.viewer_id)
 const{data:users}=await supabase.from('users').select('id,display_name,username,avatar_url').in('id',viewerIds)
 const merged=data.map((v:any)=>{
 const u=users?.find((u:any)=>u.id===v.viewer_id)
-return{...u,viewed_at:v.viewed_at}
-}).filter((v:any)=>v.display_name)
+if(!u)return null
+return{id:u.id,display_name:u.display_name,username:u.username,avatar_url:u.avatar_url,viewed_at:v.viewed_at}
+}).filter((v:any)=>v&&v.display_name) as Viewer[]
 setViewers(merged)
 }
 }

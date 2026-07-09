@@ -1,4 +1,5 @@
-import { View, Image, Text, StyleSheet, ReactNode } from 'react-native'
+import { View, Image, Text, StyleSheet } from 'react-native'
+import { ReactNode } from 'react'
 
 interface Props {
   title: string

@@ -24,11 +24,11 @@ const handlePurchase=async()=>{
 setError(null)
 setPurchasing(true)
 const result=await purchasePremium()
-if(result.success){
+if(result){
 Alert.alert('Welcome to Premium! 💎','You now have access to all Syde Vibe Premium features.')
 onSuccess()
-}else if(result.error&&result.error!=='cancelled'){
-setError(result.error)
+}else{
+setError('Purchase failed. Please try again.')
 }
 setPurchasing(false)
 }

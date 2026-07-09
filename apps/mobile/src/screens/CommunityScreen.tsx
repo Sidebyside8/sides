@@ -223,5 +223,6 @@ modalClose:{fontSize:20,color:'rgba(255,255,255,0.7)'},
 modalContent:{padding:24},
 inputLabel:{fontSize:13,color:'rgba(255,255,255,0.8)',fontWeight:'600',marginBottom:6},
 input:{backgroundColor:'rgba(255,255,255,0.7)',borderRadius:12,padding:14,color:'#ffffff',fontSize:15,marginBottom:16,borderWidth:1,borderColor:'rgba(255,255,255,0.9)'},
+eventImage:{width:'100%',height:200,borderRadius:12,marginBottom:12},
 descInput:{height:100,textAlignVertical:'top'},
 })

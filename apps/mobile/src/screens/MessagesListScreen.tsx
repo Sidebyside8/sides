@@ -3,7 +3,7 @@ import{View,Text,TouchableOpacity,StyleSheet,FlatList,Image}from'react-native'
 import{supabase}from'../lib/supabase'
 import ProfileModal from'../components/ProfileModal'
 import SydeHeader from'../components/SydeHeader'
-type Conversation={userId:string;otherUser:{id:string;display_name:string;username:string;avatar_url?:string};lastMessage:string;lastTime:string}
+type Conversation={userId:string;otherUser:{id:string;display_name:string;username:string;avatar_url?:string}|null;lastMessage:string;lastTime:string}
 export default function MessagesListScreen({onDirectMessage}:{onDirectMessage:(user:any)=>void}){
 const[convos,setConvos]=useState<Conversation[]>([])
 const[loading,setLoading]=useState(true)
