@@ -101,9 +101,6 @@ return(
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('community')}>
 <Text style={[s.tabText,activeTab==='community'&&s.tabActive]}>Community</Text>
 </TouchableOpacity>
-<TouchableOpacity style={s.tab} onPress={()=>setActiveTab('viewed')}>
-<Text style={[s.tabText,activeTab==='viewed'&&s.tabActive]}>👁️ Viewed</Text>
-</TouchableOpacity>
 <TouchableOpacity style={s.tab} onPress={()=>setActiveTab('profile')}>
 <Text style={[s.tabText,activeTab==='profile'&&s.tabActive]}>Profile</Text>
 </TouchableOpacity>
