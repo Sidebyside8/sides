@@ -32,7 +32,13 @@ export default function DiscoverScreen({ onChat, setActiveTab }: { onChat: (user
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentLocation, setCurrentLocation] = useState<string | null>(null)
-  const [filter, setFilter] = useState<'nearby' | 'global' | 'favorites'>('global')
+  const [filter, setFilter] = useState('global')
+const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+const [minAge, setMinAge] = useState(18)
+const [maxAge, setMaxAge] = useState(99)
+const [maxDistance, setMaxDistance] = useState(200)
+const [filterRelType, setFilterRelType] = useState('')
+const [isPremiumUser, setIsPremiumUser] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [showModal, setShowModal] = useState(false)
@@ -50,7 +56,7 @@ export default function DiscoverScreen({ onChat, setActiveTab }: { onChat: (user
 
     const { data: myProfileData } = await supabase
       .from('users')
-      .select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium')
+      .select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium,boosted_until')
       .eq('id', user.id)
       .single()
 
@@ -234,6 +240,7 @@ export default function DiscoverScreen({ onChat, setActiveTab }: { onChat: (user
       />
 
       <View style={s.filterRow}>
+{isPremiumUser&&<TouchableOpacity onPress={()=>setShowAdvancedFilters(true)} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(245,166,35,0.3)',alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:'#F5A623',marginRight:4}}><Text style={{fontSize:16}}>⚙️</Text></TouchableOpacity>}
         <TouchableOpacity style={[s.filterTab, filter === 'nearby' && s.filterTabActive]} onPress={() => setFilter('nearby')}>
           <Text style={[s.filterText, filter === 'nearby' && s.filterTextActive]}>📍 Nearby</Text>
         </TouchableOpacity>
@@ -306,7 +313,39 @@ export default function DiscoverScreen({ onChat, setActiveTab }: { onChat: (user
         onBlock={handleBlock}
         onReport={handleReport}
       />
-    </View>
+    
+{showAdvancedFilters&&(
+<View style={{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.85)',zIndex:100,justifyContent:'center',padding:24}}>
+<View style={{backgroundColor:'#0A2A4A',borderRadius:24,padding:24}}>
+<Text style={{color:'#ffffff',fontSize:20,fontWeight:'800',marginBottom:20}}>Advanced Filters</Text>
+<Text style={{color:'rgba(255,255,255,0.7)',fontSize:14,marginBottom:8}}>Min Age: {minAge}</Text>
+<View style={{flexDirection:'row',gap:8,marginBottom:16}}>
+{[18,25,30,40,50].map((age)=>(
+<TouchableOpacity key={String(age)} onPress={()=>setMinAge(age)} style={{paddingHorizontal:10,paddingVertical:6,borderRadius:16,backgroundColor:minAge===age?'#2196F3':'rgba(255,255,255,0.1)'}}>
+<Text style={{color:'#ffffff',fontSize:12}}>{String(age)}+</Text>
+</TouchableOpacity>
+))}
+</View>
+<Text style={{color:'rgba(255,255,255,0.7)',fontSize:14,marginBottom:8}}>Max Distance: {maxDistance} miles</Text>
+<View style={{flexDirection:'row',gap:8,marginBottom:16}}>
+{[25,50,100,200].map((d)=>(
+<TouchableOpacity key={String(d)} onPress={()=>setMaxDistance(d)} style={{paddingHorizontal:10,paddingVertical:6,borderRadius:16,backgroundColor:maxDistance===d?'#2196F3':'rgba(255,255,255,0.1)'}}>
+<Text style={{color:'#ffffff',fontSize:12}}>{String(d)}mi</Text>
+</TouchableOpacity>
+))}
+</View>
+<View style={{flexDirection:'row',gap:12,marginTop:8}}>
+<TouchableOpacity onPress={()=>{setMinAge(18);setMaxAge(99);setMaxDistance(200);setFilterRelType('');}} style={{flex:1,paddingVertical:12,borderRadius:20,backgroundColor:'rgba(255,255,255,0.1)',alignItems:'center'}}>
+<Text style={{color:'#ffffff',fontWeight:'600'}}>Reset</Text>
+</TouchableOpacity>
+<TouchableOpacity onPress={()=>{setShowAdvancedFilters(false);loadUsers();}} style={{flex:1,paddingVertical:12,borderRadius:20,backgroundColor:'#2196F3',alignItems:'center'}}>
+<Text style={{color:'#ffffff',fontWeight:'700'}}>Apply</Text>
+</TouchableOpacity>
+</View>
+</View>
+</View>
+)}
+</View>
   )
 }
 

@@ -111,10 +111,10 @@ return(
 const s=StyleSheet.create({
 container:{flex:1},
 content:{flex:1},
-tabBar:{flexDirection:'row',backgroundColor:COLORS.tabBar,borderTopWidth:1,borderTopColor:COLORS.tabBarBorder,paddingBottom:8,paddingTop:8},
+tabBar:{flexDirection:'row',backgroundColor:COLORS.tabBar,borderTopWidth:1,borderTopColor:COLORS.tabBarBorder,paddingBottom:12,paddingTop:12},
 badge:{position:'absolute',top:-6,right:-12,backgroundColor:'#FF8C00',borderRadius:9,minWidth:18,height:18,alignItems:'center',justifyContent:'center',paddingHorizontal:4},
 badgeText:{color:'#ffffff',fontSize:10,fontWeight:'700'},
-tab:{flex:1,alignItems:'center',justifyContent:'center',height:44},
-tabText:{color:COLORS.tabInactive,fontSize:10,fontWeight:'500'},
-tabActive:{color:COLORS.tabActive,fontWeight:'700'},
+tab:{flex:1,alignItems:'center',justifyContent:'center',height:50},
+tabText:{color:COLORS.tabInactive,fontSize:13,fontWeight:'600'},
+tabActive:{color:COLORS.tabActive,fontWeight:'800',fontSize:13},
 })

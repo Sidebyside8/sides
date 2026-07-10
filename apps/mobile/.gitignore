@@ -39,3 +39,8 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+credentials.json
+credentials/
+*.p12
+*.mobileprovision
+.xcode.env.local
