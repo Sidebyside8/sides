@@ -4,6 +4,7 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, Image, Dimen
 import { supabase } from '../lib/supabase'
 import SydeHeader from '../components/SydeHeader'
 import ProfileModal from '../components/ProfileModal'
+import FavoritesScreen from './FavoritesScreen'
 import { notifyNewMatch } from '../lib/notifications'
 
 const { width } = Dimensions.get('window')
@@ -27,18 +28,20 @@ type User = {
   is_premium?: boolean
 }
 
-export default function DiscoverScreen({ onChat, setActiveTab }: { onChat: (user: any) => void; setActiveTab?: (tab: string) => void }) {
+export default function DiscoverScreen({ onChat, setActiveTab, onUpgrade }: { onChat: (user: any) => void; setActiveTab?: (tab: string) => void; onUpgrade?: () => void }) {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentLocation, setCurrentLocation] = useState<string | null>(null)
   const [filter, setFilter] = useState('global')
-const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
-const [minAge, setMinAge] = useState(18)
-const [maxAge, setMaxAge] = useState(99)
-const [maxDistance, setMaxDistance] = useState(200)
-const [filterRelType, setFilterRelType] = useState('')
-const [isPremiumUser, setIsPremiumUser] = useState(false)
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
+  const [minAge, setMinAge] = useState(18)
+  const [maxAge, setMaxAge] = useState(99)
+  const [maxDistance, setMaxDistance] = useState(200)
+  const [filterRelType, setFilterRelType] = useState('')
+  const [isPremiumUser, setIsPremiumUser] = useState(false)
+  const [isIncognito, setIsIncognito] = useState(false)
+  const [showFavorites, setShowFavorites] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [showModal, setShowModal] = useState(false)
@@ -56,13 +59,16 @@ const [isPremiumUser, setIsPremiumUser] = useState(false)
 
     const { data: myProfileData } = await supabase
       .from('users')
-      .select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium,boosted_until')
+      .select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium,boosted_until,is_incognito')
       .eq('id', user.id)
       .single()
 
-    if (myProfileData) setMyProfile(myProfileData as User)
+    if (myProfileData) {
+      setMyProfile(myProfileData as User)
+      setIsPremiumUser(!!myProfileData.is_premium)
+      setIsIncognito(!!(myProfileData as any).is_incognito)
+    }
 
-    // Get coordinates using local variable to avoid stale state
     let localCoords: { lat: number; lng: number } | null = myCoords
 
     try {
@@ -142,6 +148,14 @@ const [isPremiumUser, setIsPremiumUser] = useState(false)
       setUsers(nearbyFiltered)
     }
     setLoading(false)
+  }
+
+  const handleToggleIncognito = async () => {
+    if (!isPremiumUser) { onUpgrade && onUpgrade(); return }
+    const next = !isIncognito
+    setIsIncognito(next)
+    const { error } = await supabase.from('users').update({ is_incognito: next }).eq('id', currentUserId)
+    if (error) { setIsIncognito(!next); Alert.alert('Error', error.message) }
   }
 
   const handleToggleFavorite = async (favId: string) => {
@@ -229,6 +243,9 @@ const [isPremiumUser, setIsPremiumUser] = useState(false)
         }
         rightAction={
           <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+            <TouchableOpacity onPress={()=>setShowFavorites(true)} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
+              <Text style={{fontSize:18}}>⭐</Text>
+            </TouchableOpacity>
             <TouchableOpacity onPress={()=>setActiveTab&&setActiveTab('viewed')} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
               <Text style={{fontSize:18}}>👁️</Text>
             </TouchableOpacity>
@@ -240,12 +257,15 @@ const [isPremiumUser, setIsPremiumUser] = useState(false)
       />
 
       <View style={s.filterRow}>
-{isPremiumUser&&<TouchableOpacity onPress={()=>setShowAdvancedFilters(true)} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(245,166,35,0.3)',alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:'#F5A623',marginRight:4}}><Text style={{fontSize:16}}>⚙️</Text></TouchableOpacity>}
+        {isPremiumUser&&<TouchableOpacity onPress={()=>setShowAdvancedFilters(true)} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(245,166,35,0.3)',alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:'#F5A623',marginRight:4}}><Text style={{fontSize:16}}>⚙️</Text></TouchableOpacity>}
         <TouchableOpacity style={[s.filterTab, filter === 'nearby' && s.filterTabActive]} onPress={() => setFilter('nearby')}>
           <Text style={[s.filterText, filter === 'nearby' && s.filterTextActive]}>📍 Nearby</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[s.filterTab, filter === 'global' && s.filterTabActive]} onPress={() => setFilter('global')}>
           <Text style={[s.filterText, filter === 'global' && s.filterTextActive]}>🌍 Global</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[s.filterTab, isIncognito && s.incognitoActive]} onPress={handleToggleIncognito}>
+          <Text style={[s.filterText, isIncognito && s.filterTextActive]}>🕶️ Incognito</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[s.filterTab, filter === 'favorites' && s.filterTabActive]} onPress={() => setFilter('favorites')}>
           <Text style={[s.filterText, filter === 'favorites' && s.filterTextActive]}>★ Saved</Text>
@@ -313,39 +333,44 @@ const [isPremiumUser, setIsPremiumUser] = useState(false)
         onBlock={handleBlock}
         onReport={handleReport}
       />
-    
-{showAdvancedFilters&&(
-<View style={{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.85)',zIndex:100,justifyContent:'center',padding:24}}>
-<View style={{backgroundColor:'#0A2A4A',borderRadius:24,padding:24}}>
-<Text style={{color:'#ffffff',fontSize:20,fontWeight:'800',marginBottom:20}}>Advanced Filters</Text>
-<Text style={{color:'rgba(255,255,255,0.7)',fontSize:14,marginBottom:8}}>Min Age: {minAge}</Text>
-<View style={{flexDirection:'row',gap:8,marginBottom:16}}>
-{[18,25,30,40,50].map((age)=>(
-<TouchableOpacity key={String(age)} onPress={()=>setMinAge(age)} style={{paddingHorizontal:10,paddingVertical:6,borderRadius:16,backgroundColor:minAge===age?'#2196F3':'rgba(255,255,255,0.1)'}}>
-<Text style={{color:'#ffffff',fontSize:12}}>{String(age)}+</Text>
-</TouchableOpacity>
-))}
-</View>
-<Text style={{color:'rgba(255,255,255,0.7)',fontSize:14,marginBottom:8}}>Max Distance: {maxDistance} miles</Text>
-<View style={{flexDirection:'row',gap:8,marginBottom:16}}>
-{[25,50,100,200].map((d)=>(
-<TouchableOpacity key={String(d)} onPress={()=>setMaxDistance(d)} style={{paddingHorizontal:10,paddingVertical:6,borderRadius:16,backgroundColor:maxDistance===d?'#2196F3':'rgba(255,255,255,0.1)'}}>
-<Text style={{color:'#ffffff',fontSize:12}}>{String(d)}mi</Text>
-</TouchableOpacity>
-))}
-</View>
-<View style={{flexDirection:'row',gap:12,marginTop:8}}>
-<TouchableOpacity onPress={()=>{setMinAge(18);setMaxAge(99);setMaxDistance(200);setFilterRelType('');}} style={{flex:1,paddingVertical:12,borderRadius:20,backgroundColor:'rgba(255,255,255,0.1)',alignItems:'center'}}>
-<Text style={{color:'#ffffff',fontWeight:'600'}}>Reset</Text>
-</TouchableOpacity>
-<TouchableOpacity onPress={()=>{setShowAdvancedFilters(false);loadUsers();}} style={{flex:1,paddingVertical:12,borderRadius:20,backgroundColor:'#2196F3',alignItems:'center'}}>
-<Text style={{color:'#ffffff',fontWeight:'700'}}>Apply</Text>
-</TouchableOpacity>
-</View>
-</View>
-</View>
-)}
-</View>
+
+      {showFavorites&&(
+        <View style={{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'#0A2A4A',zIndex:90}}>
+          <FavoritesScreen onClose={()=>setShowFavorites(false)}/>
+        </View>
+      )}
+      {showAdvancedFilters&&(
+        <View style={{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.85)',zIndex:100,justifyContent:'center',padding:24}}>
+          <View style={{backgroundColor:'#0A2A4A',borderRadius:24,padding:24}}>
+            <Text style={{color:'#ffffff',fontSize:20,fontWeight:'800',marginBottom:20}}>Advanced Filters</Text>
+            <Text style={{color:'rgba(255,255,255,0.7)',fontSize:14,marginBottom:8}}>Min Age: {minAge}</Text>
+            <View style={{flexDirection:'row',gap:8,marginBottom:16}}>
+              {[18,25,30,40,50].map((age)=>(
+                <TouchableOpacity key={String(age)} onPress={()=>setMinAge(age)} style={{paddingHorizontal:10,paddingVertical:6,borderRadius:16,backgroundColor:minAge===age?'#2196F3':'rgba(255,255,255,0.1)'}}>
+                  <Text style={{color:'#ffffff',fontSize:12}}>{String(age)}+</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={{color:'rgba(255,255,255,0.7)',fontSize:14,marginBottom:8}}>Max Distance: {maxDistance} miles</Text>
+            <View style={{flexDirection:'row',gap:8,marginBottom:16}}>
+              {[25,50,100,200].map((d)=>(
+                <TouchableOpacity key={String(d)} onPress={()=>setMaxDistance(d)} style={{paddingHorizontal:10,paddingVertical:6,borderRadius:16,backgroundColor:maxDistance===d?'#2196F3':'rgba(255,255,255,0.1)'}}>
+                  <Text style={{color:'#ffffff',fontSize:12}}>{String(d)}mi</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={{flexDirection:'row',gap:12,marginTop:8}}>
+              <TouchableOpacity onPress={()=>{setMinAge(18);setMaxAge(99);setMaxDistance(200);setFilterRelType('');}} style={{flex:1,paddingVertical:12,borderRadius:20,backgroundColor:'rgba(255,255,255,0.1)',alignItems:'center'}}>
+                <Text style={{color:'#ffffff',fontWeight:'600'}}>Reset</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={()=>{setShowAdvancedFilters(false);loadUsers();}} style={{flex:1,paddingVertical:12,borderRadius:20,backgroundColor:'#2196F3',alignItems:'center'}}>
+                <Text style={{color:'#ffffff',fontWeight:'700'}}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+    </View>
   )
 }
 
@@ -354,6 +379,7 @@ const s = StyleSheet.create({
   filterRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: 4 },
   filterTab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 10 },
   filterTabActive: { backgroundColor: '#2196F3' },
+  incognitoActive: { backgroundColor: '#5E35B1' },
   filterText: { fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
   filterTextActive: { color: '#ffffff', fontWeight: '700' },
   banner: { marginHorizontal: 16, marginBottom: 12, backgroundColor: 'rgba(241,90,34,0.2)', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: 'rgba(255,140,0,0.4)' },

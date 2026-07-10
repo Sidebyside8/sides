@@ -82,12 +82,17 @@ if(activeDirectMessage)return<DirectMessageScreen otherUser={activeDirectMessage
 return(
 <LinearGradient colors={GRADIENT.colors} start={GRADIENT.start} end={GRADIENT.end} style={s.container}>
 <View style={s.content}>
-{activeTab==='discover'&&<DiscoverScreen key={discoverKey} onChat={(user)=>setActiveDirectMessage(user)} setActiveTab={(tab:string)=>setActiveTab(tab as Tab)}/>}
+{activeTab==='discover'&&<DiscoverScreen key={discoverKey} onChat={(user)=>setActiveDirectMessage(user)} setActiveTab={(tab:string)=>setActiveTab(tab as Tab)} onUpgrade={()=>setShowPremium(true)}/>}
 {activeTab==='messages'&&<MessagesListScreen onDirectMessage={(user)=>setActiveDirectMessage(user)}/>}
 {activeTab==='community'&&<CommunityScreen/>}
 {activeTab==='profile'&&<ProfileScreen onUpgrade={()=>setShowPremium(true)} isPremium={isPremium}/>}
 {activeTab==='viewed'&&<WhoViewedMeScreen onClose={()=>setActiveTab('profile')}/>}
 </View>
+{!isPremium&&(
+<TouchableOpacity style={s.premiumBanner} onPress={()=>setShowPremium(true)} activeOpacity={0.85}>
+<Text style={s.premiumBannerText}>👑 Unlock Premium — more photos, filters & priority</Text>
+</TouchableOpacity>
+)}
 <View style={s.tabBar}>
 <TouchableOpacity style={s.tab} onPress={()=>{setActiveTab('discover');setDiscoverKey(k=>k+1)}}>
 <Text style={[s.tabText,activeTab==='discover'&&s.tabActive]}>Discover</Text>
@@ -111,6 +116,8 @@ return(
 const s=StyleSheet.create({
 container:{flex:1},
 content:{flex:1},
+premiumBanner:{backgroundColor:'#F5A623',paddingVertical:10,paddingHorizontal:16,alignItems:'center'},
+premiumBannerText:{color:'#0A1628',fontSize:13,fontWeight:'800'},
 tabBar:{flexDirection:'row',backgroundColor:COLORS.tabBar,borderTopWidth:1,borderTopColor:COLORS.tabBarBorder,paddingBottom:12,paddingTop:12},
 badge:{position:'absolute',top:-6,right:-12,backgroundColor:'#FF8C00',borderRadius:9,minWidth:18,height:18,alignItems:'center',justifyContent:'center',paddingHorizontal:4},
 badgeText:{color:'#ffffff',fontSize:10,fontWeight:'700'},

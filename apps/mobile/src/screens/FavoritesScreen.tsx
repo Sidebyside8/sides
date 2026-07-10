@@ -3,7 +3,7 @@ import{View,Text,TouchableOpacity,StyleSheet,FlatList,Alert,Image}from'react-nat
 import{supabase}from'../lib/supabase'
 import SydeHeader from'../components/SydeHeader'
 type FavUser={id:string;username:string;display_name:string;bio:string;age:number;avatar_url?:string;location?:string}
-export default function FavoritesScreen(){
+export default function FavoritesScreen({onClose}:{onClose?:()=>void}){
 const[users,setUsers]=useState<FavUser[]>([])
 const[loading,setLoading]=useState(true)
 const[currentUserId,setCurrentUserId]=useState<string|null>(null)
@@ -30,7 +30,11 @@ else Alert.alert('Liked!','You liked this person')
 }
 return(
 <View style={s.container}>
-<SydeHeader title="Favorites"/>
+<SydeHeader title="Favorites" rightAction={onClose?(
+<TouchableOpacity onPress={onClose} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
+<Text style={{color:'#ffffff',fontSize:18}}>✕</Text>
+</TouchableOpacity>
+):undefined}/>
 {loading?<View style={s.center}><Text style={s.loadingText}>Loading favorites...</Text></View>
 :users.length===0?<View style={s.center}><Text style={s.loadingText}>No favorites yet</Text><Text style={s.subText}>Star profiles on Discover to save them here</Text></View>
 :<FlatList data={users} keyExtractor={i=>i.id} contentContainerStyle={s.list} renderItem={({item})=>(
