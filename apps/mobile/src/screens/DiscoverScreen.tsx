@@ -370,7 +370,10 @@ export default function DiscoverScreen({ onChat, setActiveTab, onUpgrade }: { on
 
       {showFavorites && (
         <View style={favOverlayStyle}>
-          <FavoritesScreen onClose={() => setShowFavorites(false)} />
+          <FavoritesScreen
+            onClose={() => setShowFavorites(false)}
+            onChat={(user) => { setShowFavorites(false); setTimeout(() => onChat(user), 400) }}
+          />
         </View>
       )}
 

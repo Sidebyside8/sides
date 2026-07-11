@@ -9,7 +9,7 @@ const CARD_SIZE=(width-48)/3
 
 type FavUser={id:string;username:string;display_name:string;bio:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string}
 
-export default function FavoritesScreen({onClose}:{onClose?:()=>void}){
+export default function FavoritesScreen({onClose,onChat}:{onClose?:()=>void;onChat?:(user:any)=>void}){
 const[users,setUsers]=useState<FavUser[]>([])
 const[loading,setLoading]=useState(true)
 const[currentUserId,setCurrentUserId]=useState<string|null>(null)
@@ -37,6 +37,12 @@ await supabase.from('favorites').delete().eq('user_id',currentUserId).eq('favori
 setFavorites(prev=>{const n=new Set(prev);n.delete(favId);return n})
 setUsers(prev=>prev.filter(u=>u.id!==favId))
 setShowModal(false)
+}
+
+const handleChat=(_userId:string,user:any)=>{
+setShowModal(false)
+onClose&&onClose()
+setTimeout(()=>{onChat&&onChat(user)},400)
 }
 
 const handleCardPress=(user:FavUser)=>{
@@ -85,7 +91,7 @@ renderItem={({item})=>(
 user={selectedUser}
 visible={showModal}
 onClose={()=>setShowModal(false)}
-onChat={()=>{}}
+onChat={handleChat}
 isFavorite={selectedUser?favorites.has(selectedUser.id):false}
 onToggleFavorite={handleUnfavorite}
 onBlock={()=>{}}
