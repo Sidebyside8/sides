@@ -243,6 +243,22 @@ export default function DiscoverScreen({ onChat, setActiveTab, onUpgrade }: { on
     setShowModal(true)
   }
 
+  const advancedFilterStyle = {
+    position: 'absolute' as const,
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    zIndex: 100,
+    justifyContent: 'center' as const,
+    padding: 24
+  }
+
+  const favOverlayStyle = {
+    position: 'absolute' as const,
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#0A2A4A',
+    zIndex: 90
+  }
+
   return (
     <View style={s.container}>
       <SydeHeader
@@ -353,11 +369,92 @@ export default function DiscoverScreen({ onChat, setActiveTab, onUpgrade }: { on
       />
 
       {showFavorites && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#0A2A4A', zIndex: 90 }}>
+        <View style={favOverlayStyle}>
           <FavoritesScreen onClose={() => setShowFavorites(false)} />
         </View>
       )}
 
-      {showAdvancedFilters ? (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.85)', zIndex: 100, justifyContent: 'center', padding: 24 }}></View>
-      ) : null}
+      {showAdvancedFilters && (
+        <View style={advancedFilterStyle}>
+          <View style={{ backgroundColor: '#0A2A4A', borderRadius: 24, padding: 24 }}>
+            <Text style={{ color: '#ffffff', fontSize: 20, fontWeight: '800', marginBottom: 20 }}>Advanced Filters</Text>
+
+            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 8 }}>Min Age: {minAge}</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              {[18, 25, 30, 40, 50].map((age) => (
+                <TouchableOpacity key={String(age)} onPress={() => setMinAge(age)} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: minAge === age ? '#2196F3' : 'rgba(255,255,255,0.1)' }}>
+                  <Text style={{ color: '#ffffff', fontSize: 12 }}>{String(age)}+</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 8 }}>Max Distance: {maxDistance === 200 ? 'Any' : maxDistance + ' mi'}</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              {[25, 50, 100, 200].map((d) => (
+                <TouchableOpacity key={String(d)} onPress={() => setMaxDistance(d)} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: maxDistance === d ? '#2196F3' : 'rgba(255,255,255,0.1)' }}>
+                  <Text style={{ color: '#ffffff', fontSize: 12 }}>{d === 200 ? 'Any' : d + 'mi'}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 14, marginBottom: 8 }}>Relationship Type</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+              {['', 'Monogamous', 'Open', 'Casual', 'Friends'].map((rt) => (
+                <TouchableOpacity key={rt} onPress={() => setFilterRelType(rt)} style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: filterRelType === rt ? '#2196F3' : 'rgba(255,255,255,0.1)' }}>
+                  <Text style={{ color: '#ffffff', fontSize: 12 }}>{rt === '' ? 'Any' : rt}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TouchableOpacity
+              onPress={() => { setShowAdvancedFilters(false); setShowFavorites(true) }}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 16, backgroundColor: 'rgba(241,90,34,0.2)', borderWidth: 1, borderColor: 'rgba(255,140,0,0.4)', marginBottom: 16 }}
+            >
+              <Text style={{ color: '#FF8C00', fontSize: 15, fontWeight: '700' }}>❤️  View Saved Profiles</Text>
+            </TouchableOpacity>
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity onPress={handleResetFilters} style={{ flex: 1, paddingVertical: 12, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)', alignItems: 'center' }}>
+                <Text style={{ color: '#ffffff', fontWeight: '600' }}>Reset</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleApplyFilters} style={{ flex: 1, paddingVertical: 12, borderRadius: 20, backgroundColor: '#2196F3', alignItems: 'center' }}>
+                <Text style={{ color: '#ffffff', fontWeight: '700' }}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+    </View>
+  )
+}
+
+const s = StyleSheet.create({
+  container: { flex: 1 },
+  filterRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 12, padding: 4 },
+  filterTab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 10 },
+  filterTabActive: { backgroundColor: '#2196F3' },
+  incognitoActive: { backgroundColor: '#5E35B1' },
+  filterText: { fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
+  filterTextActive: { color: '#ffffff', fontWeight: '700' },
+  banner: { marginHorizontal: 16, marginBottom: 12, backgroundColor: 'rgba(241,90,34,0.2)', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: 'rgba(255,140,0,0.4)' },
+  bannerText: { color: '#FF8C00', fontSize: 13, textAlign: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  grid: { padding: 12 },
+  row: { gap: 8, marginBottom: 8 },
+  card: { width: CARD_SIZE, alignItems: 'center' },
+  cardInner: { width: CARD_SIZE, height: CARD_SIZE, borderRadius: 12, overflow: 'hidden', position: 'relative' },
+  cardImage: { width: CARD_SIZE, height: CARD_SIZE },
+  cardPlaceholder: { width: CARD_SIZE, height: CARD_SIZE, backgroundColor: 'rgba(33,150,243,0.4)', alignItems: 'center', justifyContent: 'center' },
+  cardPlaceholderText: { color: '#ffffff', fontSize: 28, fontWeight: 'bold' },
+  favBadge: { position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 10, padding: 2 },
+  favBadgeText: { fontSize: 12 },
+  cardTitle: { color: '#ffffff', fontSize: 11, marginTop: 4, textAlign: 'center', fontWeight: '500', width: CARD_SIZE },
+  loadingText: { color: '#ffffff', fontSize: 18, fontWeight: '600' },
+  subText: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 8 },
+  distBadge: { position: 'absolute', bottom: 4, left: 4, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 8, paddingHorizontal: 5, paddingVertical: 2 },
+  distText: { color: '#ffffff', fontSize: 9, fontWeight: '700' },
+  onlineDot: { position: 'absolute', top: 6, left: 6, width: 10, height: 10, borderRadius: 5, backgroundColor: '#00E676', borderWidth: 1.5, borderColor: '#ffffff' },
+  premiumBadge: { position: 'absolute', bottom: 4, right: 4, backgroundColor: 'rgba(245,166,35,0.9)', borderRadius: 8, paddingHorizontal: 4, paddingVertical: 1 },
+  premiumBadgeText: { fontSize: 10 },
+  cardAge: { color: 'rgba(255,255,255,0.6)', fontSize: 9, textAlign: 'center', width: CARD_SIZE },
+})
