@@ -6,6 +6,7 @@ import{supabase}from'./src/lib/supabase'
 import{GRADIENT,COLORS}from'./src/lib/theme'
 import{registerForPushNotifications,savePushToken}from'./src/lib/notifications'
 import{AppState}from'react-native'
+import{setupPurchases,checkPremiumStatus}from'./src/lib/subscription'
 import LoginScreen from'./src/screens/LoginScreen'
 import ProfileSetupScreen from'./src/screens/ProfileSetupScreen'
 import DiscoverScreen from'./src/screens/DiscoverScreen'
@@ -44,6 +45,7 @@ return()=>subscription.unsubscribe()
 const checkProfile=async(userId:string)=>{
 if(profileChecked.current===userId)return
 profileChecked.current=userId
+setupPurchases()
 try{
 const{data}=await supabase.from('users').select('id').eq('id',userId).maybeSingle()
 const hasP=!!data
