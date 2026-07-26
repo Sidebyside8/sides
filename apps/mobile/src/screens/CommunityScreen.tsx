@@ -1,11 +1,14 @@
 import{useEffect,useState}from'react'
-import DateTimePicker from'@react-native-community/datetimepicker'
 import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,Alert,KeyboardAvoidingView,Platform,Modal,ScrollView,Image}from'react-native'
 import{supabase}from'../lib/supabase'
 import SydeHeader from'../components/SydeHeader'
 import CreateEventScreen from'./CreateEventScreen'
 type Post={id:string;content:string;user_id:string;created_at:string;author:{display_name:string;username:string}}
 type Event={id:string;title:string;description:string;location:string;event_date:string;user_id:string;created_at:string;author:{display_name:string;username:string}}
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December']
+const HOURS=Array.from({length:12},(_,i)=>String(i+1).padStart(2,'0'))
+const MINUTES=['00','15','30','45']
+const AMPM=['AM','PM']
 export default function CommunityScreen(){
 const[tab,setTab]=useState<'posts'|'events'>('posts')
 const[posts,setPosts]=useState<Post[]>([])
@@ -19,9 +22,16 @@ const[showCreateEvent,setShowCreateEvent]=useState(false)
 const[eventTitle,setEventTitle]=useState('')
 const[eventDesc,setEventDesc]=useState('')
 const[eventLocation,setEventLocation]=useState('')
-const[eventDate,setEventDate]=useState('')
-const[selectedDate,setSelectedDate]=useState(new Date())
-const[showDatePicker,setShowDatePicker]=useState(false)
+const now=new Date()
+const[selMonth,setSelMonth]=useState(now.getMonth())
+const[selDay,setSelDay]=useState(now.getDate())
+const[selYear,setSelYear]=useState(now.getFullYear())
+const[selHour,setSelHour]=useState('12')
+const[selMinute,setSelMinute]=useState('00')
+const[selAmpm,setSelAmpm]=useState('PM')
+const years=Array.from({length:3},(_,i)=>now.getFullYear()+i)
+const daysInMonth=new Date(selYear,selMonth+1,0).getDate()
+const days=Array.from({length:daysInMonth},(_,i)=>i+1)
 useEffect(()=>{loadContent()},[tab])
 const loadContent=async()=>{
 setLoading(true)
@@ -60,22 +70,30 @@ setPosts(prev=>[{...data,author},...prev])
 }
 setPosting(false)
 }
+const getSelectedDate=()=>{
+let hour=parseInt(selHour)
+if(selAmpm==='PM'&&hour!==12)hour+=12
+if(selAmpm==='AM'&&hour===12)hour=0
+const d=new Date(selYear,selMonth,selDay,hour,parseInt(selMinute))
+return d
+}
 const handleCreateEvent=async()=>{
-if(!eventTitle.trim()||!eventDate.trim()){Alert.alert('Required','Please enter a title and date');return}
-const parsedDate=selectedDate
+if(!eventTitle.trim()){Alert.alert('Required','Please enter an event title');return}
+const eventDateObj=getSelectedDate()
+if(eventDateObj<new Date()){Alert.alert('Invalid Date','Please select a future date and time');return}
 setPosting(true)
 const{data,error}=await supabase.from('events').insert({
 user_id:currentUserId,
 title:eventTitle.trim(),
 description:eventDesc.trim(),
 location:eventLocation.trim(),
-event_date:selectedDate.toISOString(),
+event_date:eventDateObj.toISOString(),
 }).select().single()
 if(error){Alert.alert('Error',error.message)}else{
 const{data:author}=await supabase.from('users').select('display_name,username').eq('id',currentUserId).single()
 setEvents(prev=>[...prev,{...data,author}].sort((a,b)=>new Date(a.event_date).getTime()-new Date(b.event_date).getTime()))
 setShowEventModal(false)
-setEventTitle('');setEventDesc('');setEventLocation('');setEventDate('')
+setEventTitle('');setEventDesc('');setEventLocation('')
 Alert.alert('Event Created!','Your event has been posted')
 }
 setPosting(false)
@@ -92,6 +110,15 @@ const formatEventDate=(d:string)=>{
 const date=new Date(d)
 return date.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})
 }
+const ScrollPicker=({values,selected,onSelect}:{values:(string|number)[];selected:string|number;onSelect:(v:any)=>void})=>(
+<ScrollView style={s.pickerCol} showsVerticalScrollIndicator={false}>
+{values.map((v,i)=>(
+<TouchableOpacity key={String(i)} onPress={()=>onSelect(v)} style={[s.pickerItem,String(selected)===String(v)&&s.pickerItemActive]}>
+<Text style={[s.pickerText,String(selected)===String(v)&&s.pickerTextActive]}>{String(v)}</Text>
+</TouchableOpacity>
+))}
+</ScrollView>
+)
 if(showCreateEvent)return<CreateEventScreen onBack={()=>setShowCreateEvent(false)} onCreated={()=>{setShowCreateEvent(false);if(tab==='events')loadContent()}}/>
 return(
 <KeyboardAvoidingView style={s.container} behavior={Platform.OS==='ios'?'padding':'height'}>
@@ -130,7 +157,7 @@ renderItem={({item})=>(
 </>
 ):(
 <>
-<TouchableOpacity style={s.createEventButton} onPress={()=>setShowCreateEvent(true)}>
+<TouchableOpacity style={s.createEventButton} onPress={()=>setShowEventModal(true)}>
 <Text style={s.createEventText}>+ Create Event</Text>
 </TouchableOpacity>
 {loading?<View style={s.center}><Text style={s.loadingText}>Loading events...</Text></View>
@@ -150,33 +177,56 @@ renderItem={({item})=>(
 )}/>}
 </>
 )}
-<Modal visible={showEventModal} animationType="slide">
-<KeyboardAvoidingView style={{flex:1}} behavior={Platform.OS==='ios'?'padding':'height'}>
-<View style={s.modalContainer}>
-<View style={s.modalHeader}>
-<Text style={s.modalTitle}>Create Event</Text>
+<Modal visible={showEventModal} animationType="slide" transparent>
+<View style={{flex:1,backgroundColor:'rgba(0,0,0,0.7)',justifyContent:'flex-end'}}>
+<View style={{backgroundColor:'#0A2A4A',borderTopLeftRadius:24,borderTopRightRadius:24,padding:24,paddingBottom:40}}>
+<View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+<Text style={{color:'#ffffff',fontSize:20,fontWeight:'800'}}>Create Event</Text>
 <TouchableOpacity onPress={()=>setShowEventModal(false)}>
-<Text style={s.modalClose}>✕</Text>
+<Text style={{color:'rgba(255,255,255,0.7)',fontSize:20}}>✕</Text>
 </TouchableOpacity>
 </View>
-<ScrollView contentContainerStyle={s.modalContent}>
+<ScrollView showsVerticalScrollIndicator={false}>
 <Text style={s.inputLabel}>Event Title *</Text>
-<TextInput style={s.input} placeholder="e.g. Syde Meetup NYC" placeholderTextColor='rgba(255,255,255,0.9)' value={eventTitle} onChangeText={setEventTitle}/>
-<Text style={s.inputLabel}>Date & Time * (YYYY-MM-DD HH:MM)</Text>
-<TouchableOpacity style={{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,marginBottom:12}} onPress={()=>setShowDatePicker(true)}>
-<Text style={{color:'#ffffff',fontSize:16}}>{selectedDate.toLocaleDateString('en-US',{weekday:'short',month:'long',day:'numeric',year:'numeric'})}</Text>
-</TouchableOpacity>
-{showDatePicker&&<DateTimePicker value={selectedDate} mode="date" display="default" minimumDate={new Date()} onChange={(_e:any,d?:Date)=>{setShowDatePicker(false);if(d){setSelectedDate(d);setEventDate(d.toISOString())}}}/>}
+<TextInput style={s.input} placeholder="e.g. Syde Meetup NYC" placeholderTextColor='rgba(255,255,255,0.5)' value={eventTitle} onChangeText={setEventTitle}/>
+<Text style={s.inputLabel}>Date & Time</Text>
+<View style={s.pickerContainer}>
+<View style={{flex:2}}>
+<Text style={s.pickerLabel}>Month</Text>
+<ScrollPicker values={MONTHS} selected={MONTHS[selMonth]} onSelect={(v:string)=>setSelMonth(MONTHS.indexOf(v))}/>
+</View>
+<View style={{flex:1}}>
+<Text style={s.pickerLabel}>Day</Text>
+<ScrollPicker values={days} selected={selDay} onSelect={setSelDay}/>
+</View>
+<View style={{flex:1}}>
+<Text style={s.pickerLabel}>Year</Text>
+<ScrollPicker values={years} selected={selYear} onSelect={setSelYear}/>
+</View>
+<View style={{flex:1}}>
+<Text style={s.pickerLabel}>Hour</Text>
+<ScrollPicker values={HOURS} selected={selHour} onSelect={setSelHour}/>
+</View>
+<View style={{flex:1}}>
+<Text style={s.pickerLabel}>Min</Text>
+<ScrollPicker values={MINUTES} selected={selMinute} onSelect={setSelMinute}/>
+</View>
+<View style={{flex:1}}>
+<Text style={s.pickerLabel}>AM/PM</Text>
+<ScrollPicker values={AMPM} selected={selAmpm} onSelect={setSelAmpm}/>
+</View>
+</View>
+<Text style={{color:'rgba(255,255,255,0.6)',fontSize:12,marginBottom:16,textAlign:'center'}}>Selected: {MONTHS[selMonth]} {selDay}, {selYear} at {selHour}:{selMinute} {selAmpm}</Text>
 <Text style={s.inputLabel}>Location</Text>
-<TextInput style={s.input} placeholder="e.g. New York, NY" placeholderTextColor='rgba(255,255,255,0.9)' value={eventLocation} onChangeText={setEventLocation}/>
+<TextInput style={s.input} placeholder="e.g. New York, NY" placeholderTextColor='rgba(255,255,255,0.5)' value={eventLocation} onChangeText={setEventLocation}/>
 <Text style={s.inputLabel}>Description</Text>
-<TextInput style={[s.input,s.descInput]} placeholder="Tell people about your event..." placeholderTextColor='rgba(255,255,255,0.9)' value={eventDesc} onChangeText={setEventDesc} multiline/>
-<TouchableOpacity style={[s.postButton,posting&&s.postButtonDisabled]} onPress={handleCreateEvent} disabled={posting}>
+<TextInput style={[s.input,{height:80,textAlignVertical:'top'}]} placeholder="Tell people about your event..." placeholderTextColor='rgba(255,255,255,0.5)' value={eventDesc} onChangeText={setEventDesc} multiline/>
+<TouchableOpacity style={[s.postButton,{width:'100%',alignSelf:'stretch'},posting&&s.postButtonDisabled]} onPress={handleCreateEvent} disabled={posting}>
 <Text style={s.postButtonText}>{posting?'Creating...':'Create Event'}</Text>
 </TouchableOpacity>
 </ScrollView>
 </View>
-</KeyboardAvoidingView>
+</View>
 </Modal>
 </KeyboardAvoidingView>
 )
@@ -216,13 +266,14 @@ loadingText:{color:'rgba(255,255,255,0.7)',fontSize:16},
 empty:{alignItems:'center',paddingTop:60},
 emptyText:{color:'#ffffff',fontSize:18,fontWeight:'600'},
 emptySubText:{color:'rgba(255,255,255,0.7)',fontSize:14,marginTop:8},
-modalContainer:{flex:1,backgroundColor:'transparent'},
-modalHeader:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingTop:60,paddingHorizontal:24,paddingBottom:16,borderBottomWidth:1,borderBottomColor:'rgba(0,0,0,0.1)'},
-modalTitle:{fontSize:22,fontWeight:'700',color:'#ffffff'},
-modalClose:{fontSize:20,color:'rgba(255,255,255,0.7)'},
-modalContent:{padding:24},
 inputLabel:{fontSize:13,color:'rgba(255,255,255,0.8)',fontWeight:'600',marginBottom:6},
-input:{backgroundColor:'rgba(255,255,255,0.7)',borderRadius:12,padding:14,color:'#ffffff',fontSize:15,marginBottom:16,borderWidth:1,borderColor:'rgba(255,255,255,0.9)'},
+input:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:14,color:'#ffffff',fontSize:15,marginBottom:16,borderWidth:1,borderColor:'rgba(255,255,255,0.3)'},
 eventImage:{width:'100%',height:200,borderRadius:12,marginBottom:12},
-descInput:{height:100,textAlignVertical:'top'},
+pickerContainer:{flexDirection:'row',gap:4,marginBottom:8,height:150},
+pickerCol:{flex:1},
+pickerLabel:{color:'rgba(255,255,255,0.6)',fontSize:10,textAlign:'center',marginBottom:4},
+pickerItem:{paddingVertical:8,alignItems:'center',borderRadius:8},
+pickerItemActive:{backgroundColor:'#2196F3'},
+pickerText:{color:'rgba(255,255,255,0.6)',fontSize:12},
+pickerTextActive:{color:'#ffffff',fontWeight:'700',fontSize:13},
 })
