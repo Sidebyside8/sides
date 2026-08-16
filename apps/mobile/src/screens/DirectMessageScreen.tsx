@@ -188,7 +188,7 @@ onContentSizeChange={()=>flatListRef.current?.scrollToEnd({animated:false})}
 ListEmptyComponent={<View style={s.empty}><Text style={s.emptyText}>No messages yet{'\n'}Say hello! 👋</Text></View>}
 renderItem={({item})=>{
 const isMe=item.sender_id===currentUserId
-const isRead=isMe&&item.read_at
+const isRead=isMe&&!!item.read_at
 return(
 <View style={[s.bubble,isMe?s.myBubble:s.theirBubble]}>
 {item.is_disappearing&&!isMe?(
@@ -205,8 +205,12 @@ return(
 )}
 <View style={{flexDirection:'row',justifyContent:'flex-end',alignItems:'center',gap:4}}>
 <Text style={s.timeText}>{timeAgo(item.created_at)}</Text>
-{isMe&&isPremium&&<Text style={{fontSize:10,color:isRead?'#7EC8F5':'rgba(255,255,255,0.4)'}}>{isRead?'Read':'✓'}</Text>}
 </View>
+{isMe&&isPremium&&(
+<Text style={{fontSize:10,color:'rgba(255,255,255,0.85)',fontStyle:'italic',alignSelf:'flex-end',marginTop:2}}>
+{isRead?'Read':'✓ Sent'}
+</Text>
+)}
 </View>
 )
 }}/>
@@ -243,7 +247,7 @@ onPress={handleSend} disabled={!newMessage.trim()||sending}>
 }
 const s=StyleSheet.create({
 container:{flex:1},
-header:{flexDirection:'row',alignItems:'center',paddingTop:60,paddingHorizontal:16,paddingBottom:16,backgroundColor:'rgba(0,0,0,0.3)'},
+header:{flexDirection:'row',alignItems:'center',paddingTop:Platform.OS==='android'?40:60,paddingHorizontal:16,paddingBottom:16,backgroundColor:'rgba(0,0,0,0.3)'},
 backBtn:{marginRight:12},
 backText:{color:'#2196F3',fontSize:18,fontWeight:'600'},
 headerInfo:{flexDirection:'row',alignItems:'center',flex:1},
