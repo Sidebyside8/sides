@@ -97,7 +97,7 @@ if(favData)setFavorites(new Set(favIds))
 const{data:blockData}=await supabase.from('blocks').select('blocked_id').eq('blocker_id',user.id)
 const blockedIds=blockData?blockData.map((b:any)=>b.blocked_id):[]
 
-const{data:newData}=await supabase.from('users').select('id,username,display_name,age,avatar_url,location,is_premium,created_at').neq('id',user.id).eq('is_active',true).order('created_at',{ascending:false}).limit(20)
+const{data:newData}=await supabase.from('users').select('id,username,display_name,age,avatar_url,location,is_premium,created_at').neq('id',user.id).eq('is_active',true).gte('created_at',new Date(Date.now()-7*24*60*60*1000).toISOString()).order('created_at',{ascending:false}).limit(20)
 const newFiltered=(newData||[]).filter((u:any)=>!blockedIds.includes(u.id))
 setNewUsers(myProfileData?.is_premium?newFiltered:newFiltered.slice(0,5))
 
