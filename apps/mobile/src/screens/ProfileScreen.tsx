@@ -7,8 +7,9 @@ import BlockedUsersScreen from'./BlockedUsersScreen'
 import PhotosManager from'../components/PhotosManager'
 
 const PREFERENCES=['Kissing and making out','Cuddling and physical affection','Mutual masturbation','Oral sex (giving and/or receiving)','Frottage (body-to-body rubbing or grinding)','Nipple play','Erotic massage','Sensual touching and caressing','Hand jobs','Sexting or sharing fantasies','Using sex toys','Role-play and erotic play','Showering or bathing together','Intimate companionship and emotional connection']
+const PRONOUNS=['He/Him','She/Her','They/Them','He/They','She/They','Any/All','Ask Me']
 
-type Profile={id:string;username:string;display_name:string;title?:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[];is_album_locked?:boolean}
+type Profile={id:string;username:string;display_name:string;title?:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[];is_album_locked?:boolean;pronouns?:string}
 
 export default function ProfileScreen({onUpgrade,isPremium}:{onUpgrade?:()=>void;isPremium?:boolean}){
 const[profile,setProfile]=useState<Profile|null>(null)
@@ -144,6 +145,7 @@ location:editData.location,
 looking_for:editData.looking_for,
 relationship_type:editData.relationship_type,
 preferences:editData.preferences||[],
+pronouns:editData.pronouns||'',
 }).eq('id',user.id)
 if(error)Alert.alert('Error',error.message)
 else{setProfile(prev=>prev?{...prev,...editData}:prev);setEditing(false);Alert.alert('Saved!','Profile updated')}
@@ -213,6 +215,7 @@ return(
 {editing?<TextInput style={s.editNameInput} value={editData.display_name} onChangeText={v=>setEditData(prev=>({...prev,display_name:v}))} placeholder="Display name" placeholderTextColor="#888"/>
 :<Text style={s.displayName}>{profile?.display_name}</Text>}
 <Text style={s.username}>@{profile?.username}</Text>
+{profile?.pronouns?<Text style={s.pronounsBadge}>{profile.pronouns}</Text>:null}
 </View>
 
 <PhotosManager isPremium={isPremium||false}/>
@@ -247,6 +250,16 @@ return(
 
 <View style={s.infoCard}>
 <Text style={s.sectionTitle}>About Me</Text>
+<Text style={s.infoLabel}>Pronouns</Text>
+{editing?(
+<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8,marginBottom:16}}>
+{PRONOUNS.map(p=>(
+<TouchableOpacity key={p} onPress={()=>setEditData(prev=>({...prev,pronouns:prev.pronouns===p?'':p}))} style={[s.pronounsChip,editData.pronouns===p&&s.pronounsChipActive]}>
+<Text style={[s.pronounsChipText,editData.pronouns===p&&s.pronounsChipTextActive]}>{p}</Text>
+</TouchableOpacity>
+))}
+</ScrollView>
+):<Text style={s.infoValue}>{profile?.pronouns||'Not set'}</Text>}
 <Text style={s.infoLabel}>Title (15 chars max)</Text>
 {editing?<TextInput style={s.editInput} value={editData.title} onChangeText={v=>setEditData(prev=>({...prev,title:v.slice(0,15)}))} placeholder="e.g. Looking for love" placeholderTextColor="rgba(255,255,255,0.6)" maxLength={15}/>:<Text style={s.infoValue}>{profile?.title||'Not set'}</Text>}
 <Text style={s.infoLabel}>Bio</Text>
@@ -326,6 +339,11 @@ cameraIcon:{fontSize:14},
 editNameInput:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:10,padding:10,color:'#ffffff',fontSize:20,fontWeight:'700',textAlign:'center',borderWidth:1,borderColor:'rgba(255,255,255,0.25)',marginBottom:4,width:'80%'},
 displayName:{color:'#ffffff',fontSize:22,fontWeight:'700',marginBottom:4},
 username:{color:'rgba(255,255,255,0.7)',fontSize:15},
+pronounsBadge:{color:'rgba(255,255,255,0.6)',fontSize:13,marginTop:4,backgroundColor:'rgba(255,255,255,0.1)',paddingHorizontal:12,paddingVertical:4,borderRadius:12,overflow:'hidden'},
+pronounsChip:{paddingHorizontal:14,paddingVertical:8,borderRadius:20,backgroundColor:'rgba(255,255,255,0.1)',borderWidth:1,borderColor:'rgba(255,255,255,0.2)'},
+pronounsChipActive:{backgroundColor:'#2196F3',borderColor:'#2196F3'},
+pronounsChipText:{color:'rgba(255,255,255,0.7)',fontSize:13},
+pronounsChipTextActive:{color:'#ffffff',fontWeight:'700'},
 infoCard:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:16,padding:16,marginHorizontal:24,borderWidth:1,borderColor:'rgba(255,255,255,0.25)',marginBottom:16},
 sectionTitle:{fontSize:16,fontWeight:'700',color:'#ffffff',marginBottom:4},
 prefSubtitle:{fontSize:12,color:'#778899',marginBottom:12},

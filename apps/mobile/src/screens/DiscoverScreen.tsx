@@ -9,6 +9,7 @@ import FavoritesScreen from'./FavoritesScreen'
 const{width}=Dimensions.get('window')
 const CARD_SIZE=(width-48)/3
 const NEW_CARD_SIZE=100
+const LIKE_LIMIT=10
 
 type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string;is_online?:boolean;latitude?:number;longitude?:number;is_premium?:boolean;created_at?:string}
 
@@ -22,6 +23,9 @@ export default function DiscoverScreen({onChat,setActiveTab,onUpgrade}:{onChat:(
 const[users,setUsers]=useState<User[]>([])
 const[filteredUsers,setFilteredUsers]=useState<User[]>([])
 const[newUsers,setNewUsers]=useState<User[]>([])
+const[whoLikedMe,setWhoLikedMe]=useState<User[]>([])
+const[likedIds,setLikedIds]=useState<Set<string>>(new Set())
+const[likesUsedToday,setLikesUsedToday]=useState(0)
 const[chatCount,setChatCount]=useState(0)
 const[loading,setLoading]=useState(true)
 const[currentUserId,setCurrentUserId]=useState<string|null>(null)
@@ -72,6 +76,8 @@ setIsPremiumUser(!!myProfileData.is_premium)
 setIsIncognito(!!(myProfileData as any).is_incognito)
 }
 
+const isPrem=!!myProfileData?.is_premium
+
 let localCoords:{lat:number;lng:number}|null=myCoords
 try{
 const{status}=await Location.requestForegroundPermissionsAsync()
@@ -97,9 +103,24 @@ if(favData)setFavorites(new Set(favIds))
 const{data:blockData}=await supabase.from('blocks').select('blocked_id').eq('blocker_id',user.id)
 const blockedIds=blockData?blockData.map((b:any)=>b.blocked_id):[]
 
+const today=new Date().toISOString().split('T')[0]
+const{data:likedData}=await supabase.from('likes').select('liked_id,created_at').eq('liker_id',user.id)
+const todayLikes=(likedData||[]).filter((l:any)=>l.created_at.startsWith(today))
+setLikesUsedToday(todayLikes.length)
+setLikedIds(new Set((likedData||[]).map((l:any)=>l.liked_id)))
+
+const{data:whoLikedData}=await supabase.from('likes').select('liker_id').eq('liked_id',user.id)
+if(whoLikedData&&whoLikedData.length>0){
+const likerIds=whoLikedData.map((l:any)=>l.liker_id).filter((id:string)=>!blockedIds.includes(id))
+const{data:likerProfiles}=await supabase.from('users').select('id,username,display_name,age,avatar_url,is_premium').in('id',likerIds)
+if(likerProfiles){
+setWhoLikedMe(isPrem?likerProfiles:likerProfiles.map((_:any,i:number)=>i<3?_:{..._,avatar_url:undefined,display_name:'???',isBlurred:true}))
+}
+}
+
 const{data:newData}=await supabase.from('users').select('id,username,display_name,age,avatar_url,location,is_premium,created_at').neq('id',user.id).eq('is_active',true).gte('created_at',new Date(Date.now()-7*24*60*60*1000).toISOString()).order('created_at',{ascending:false}).limit(20)
 const newFiltered=(newData||[]).filter((u:any)=>!blockedIds.includes(u.id))
-setNewUsers(myProfileData?.is_premium?newFiltered:newFiltered.slice(0,5))
+setNewUsers(isPrem?newFiltered:newFiltered.slice(0,5))
 
 const{data,error}=await supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium').neq('id',user.id).eq('is_active',true).limit(99)
 if(error){Alert.alert('Error',error.message)}else{
@@ -123,6 +144,28 @@ setUsers(nearbyFiltered)
 setFilteredUsers(nearbyFiltered)
 }
 setLoading(false)
+}
+
+const handleLike=async(likedId:string)=>{
+if(!currentUserId)return
+if(!isPremiumUser&&likesUsedToday>=LIKE_LIMIT){
+Alert.alert('Daily Limit Reached',`Free users can send ${LIKE_LIMIT} likes per day. Upgrade to Premium for unlimited!`,[
+{text:'Upgrade 👑',onPress:()=>onUpgrade&&onUpgrade()},
+{text:'OK',style:'cancel'}
+])
+return
+}
+if(likedIds.has(likedId)){
+await supabase.from('likes').delete().eq('liker_id',currentUserId).eq('liked_id',likedId)
+setLikedIds(prev=>{const n=new Set(prev);n.delete(likedId);return n})
+setLikesUsedToday(c=>Math.max(0,c-1))
+}else{
+const{error}=await supabase.from('likes').insert({liker_id:currentUserId,liked_id:likedId})
+if(!error){
+setLikedIds(prev=>new Set([...prev,likedId]))
+if(!isPremiumUser)setLikesUsedToday(c=>c+1)
+}
+}
 }
 
 const handleApplyFilters=()=>{applyFilters(users as any[],minAge,maxAge,maxDistance,filterRelType);setShowAdvancedFilters(false)}
@@ -208,7 +251,6 @@ return calcDistance(myCoords.lat,myCoords.lng,(user as any).latitude,(user as an
 }
 
 const promo=AFFILIATE_PROMOS[promoIndex]
-
 const advancedFilterStyle={position:'absolute' as const,top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.85)',zIndex:100,justifyContent:'center' as const,padding:24}
 const favOverlayStyle={position:'absolute' as const,top:0,left:0,right:0,bottom:0,backgroundColor:'#0A2A4A',zIndex:90}
 
@@ -250,6 +292,42 @@ rightAction={
 </View>
 </TouchableOpacity>
 
+{whoLikedMe.length>0&&(
+<View style={s.newSection}>
+<View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16,marginBottom:8}}>
+<Text style={s.newTitle}>❤️ Who Liked You</Text>
+{!isPremiumUser&&<TouchableOpacity onPress={()=>onUpgrade&&onUpgrade()}>
+<Text style={{color:'#F5A623',fontSize:12,fontWeight:'700'}}>Unlock all 👑</Text>
+</TouchableOpacity>}
+</View>
+<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:16,gap:10}}>
+{whoLikedMe.map((u:any,i:number)=>(
+<TouchableOpacity key={u.id+i} style={s.newCard} onPress={()=>{
+if((u as any).isBlurred){onUpgrade&&onUpgrade();return}
+setSelectedUser(u);setShowModal(true)
+}}>
+<View style={[s.newCardInner,{overflow:'hidden'}]}>
+{u.avatar_url
+?<Image source={{uri:u.avatar_url}} style={[s.newCardImage,(u as any).isBlurred&&{opacity:0.15}]}/>
+:<View style={[s.newCardImage,{backgroundColor:'rgba(255,100,100,0.4)',alignItems:'center',justifyContent:'center'}]}>
+<Text style={{color:'#fff',fontSize:22,fontWeight:'bold'}}>{(u as any).isBlurred?'?':u.display_name?.[0]||'?'}</Text>
+</View>}
+{(u as any).isBlurred&&(
+<View style={{position:'absolute',top:0,left:0,right:0,bottom:0,alignItems:'center',justifyContent:'center',backgroundColor:'rgba(0,0,0,0.5)'}}>
+<Text style={{fontSize:20}}>🔒</Text>
+</View>
+)}
+</View>
+<Text style={s.newCardName} numberOfLines={1}>{(u as any).isBlurred?'???':u.display_name}</Text>
+<View style={[s.newChatBtn,{backgroundColor:'rgba(255,100,100,0.3)',borderColor:'#ff6b6b'}]}>
+<Text style={s.newChatBtnText}>❤️</Text>
+</View>
+</TouchableOpacity>
+))}
+</ScrollView>
+</View>
+)}
+
 {newUsers.length>0&&(
 <View style={s.newSection}>
 <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16,marginBottom:8}}>
@@ -274,6 +352,12 @@ rightAction={
 </TouchableOpacity>
 ))}
 </ScrollView>
+</View>
+)}
+
+{!isPremiumUser&&(
+<View style={{paddingHorizontal:16,marginBottom:8}}>
+<Text style={{color:'rgba(255,255,255,0.5)',fontSize:11,textAlign:'right'}}>❤️ {likesUsedToday}/{LIKE_LIMIT} likes used today</Text>
 </View>
 )}
 
@@ -324,10 +408,13 @@ renderItem={({item})=>(
 {favorites.has(item.id)&&<View style={s.favBadge}><Text style={s.favBadgeText}>⭐</Text></View>}
 {item.is_online&&<View style={s.onlineDot}/>}
 {item.is_premium&&<View style={s.premiumBadge}><Text style={s.premiumBadgeText}>💎</Text></View>}
+{likedIds.has(item.id)&&<View style={s.likedBadge}><Text style={{fontSize:10}}>❤️</Text></View>}
 {(()=>{const d=getDistance(item as any);return d?<View style={s.distBadge}><Text style={s.distText}>{d}</Text></View>:null})()}
 </View>
 <Text style={s.cardTitle} numberOfLines={1}>{item.title||item.display_name}</Text>
-<Text style={s.cardAge} numberOfLines={1}>{item.age}{item.location?' · '+item.location.split(',')[0]:''}</Text>
+<TouchableOpacity style={[s.likeBtn,likedIds.has(item.id)&&s.likeBtnActive]} onPress={()=>handleLike(item.id)}>
+<Text style={{fontSize:12}}>{likedIds.has(item.id)?'❤️':'🤍'}</Text>
+</TouchableOpacity>
 </TouchableOpacity>
 )}
 />}
@@ -421,6 +508,9 @@ cardPlaceholder:{width:CARD_SIZE,height:CARD_SIZE,backgroundColor:'rgba(33,150,2
 cardPlaceholderText:{color:'#ffffff',fontSize:28,fontWeight:'bold'},
 favBadge:{position:'absolute',top:4,right:4,backgroundColor:'rgba(0,0,0,0.5)',borderRadius:10,padding:2},
 favBadgeText:{fontSize:12},
+likedBadge:{position:'absolute',top:4,left:4,backgroundColor:'rgba(0,0,0,0.5)',borderRadius:10,padding:2},
+likeBtn:{marginTop:4,backgroundColor:'rgba(255,255,255,0.1)',borderRadius:10,paddingHorizontal:8,paddingVertical:3,borderWidth:1,borderColor:'rgba(255,255,255,0.2)'},
+likeBtnActive:{backgroundColor:'rgba(255,100,100,0.3)',borderColor:'#ff6b6b'},
 cardTitle:{color:'#ffffff',fontSize:11,marginTop:4,textAlign:'center',fontWeight:'500',width:CARD_SIZE},
 loadingText:{color:'#ffffff',fontSize:18,fontWeight:'600'},
 subText:{color:'rgba(255,255,255,0.7)',fontSize:14,marginTop:8},
