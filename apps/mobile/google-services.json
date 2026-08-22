@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "549460780427",
+    "project_id": "syde-vibe",
+    "storage_bucket": "syde-vibe.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:549460780427:android:24f012f4d4980a6b46fb8e",
+        "android_client_info": {
+          "package_name": "com.sidebyside8.syde"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAky5Tb1_pwPgABM8O3O-c_k5-AGKznCd8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

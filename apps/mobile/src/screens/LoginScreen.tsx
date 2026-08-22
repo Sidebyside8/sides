@@ -126,7 +126,7 @@ export default function LoginScreen() {
                   placeholderTextColor="rgba(10,22,40,0.4)"
                   value={dob}
                   onChangeText={setDob}
-                  keyboardType="numbers-and-punctuation"
+                  keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "default"}
                   maxLength={10}
                   returnKeyType="done"
                   onSubmitEditing={Keyboard.dismiss}

@@ -1,7 +1,30 @@
 import{useState,useEffect}from'react'
 import{View,Text,TouchableOpacity,StyleSheet,Modal,ScrollView,Image,Platform}from'react-native'
+import{GestureDetector,Gesture,GestureHandlerRootView}from'react-native-gesture-handler'
+import Animated,{useSharedValue,useAnimatedStyle,withSpring}from'react-native-reanimated'
 import{supabase}from'../lib/supabase'
 type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string}
+function ZoomableImage({uri,onClose}:{uri:string;onClose:()=>void}){
+const scale=useSharedValue(1)
+const savedScale=useSharedValue(1)
+const pinch=Gesture.Pinch()
+.onUpdate(e=>{scale.value=savedScale.value*e.scale})
+.onEnd(()=>{
+savedScale.value=scale.value
+if(scale.value<1){scale.value=withSpring(1);savedScale.value=1}
+if(scale.value>5){scale.value=withSpring(5);savedScale.value=5}
+})
+const animStyle=useAnimatedStyle(()=>({transform:[{scale:scale.value}]}))
+return(
+<TouchableOpacity style={{flex:1,backgroundColor:'rgba(0,0,0,0.95)',alignItems:'center',justifyContent:'center'}} onPress={onClose} activeOpacity={1}>
+<GestureDetector gesture={pinch}>
+<Animated.Image source={{uri}} style={[{width:'95%',height:'70%',resizeMode:'contain'},animStyle]}/>
+</GestureDetector>
+<Text style={{color:'rgba(255,255,255,0.5)',marginTop:20,fontSize:14}}>Pinch to zoom • Tap to close</Text>
+</TouchableOpacity>
+)
+}
+
 export default function ProfileModal({user,visible,onClose,onChat,isFavorite,onToggleFavorite,onBlock,onReport,viewerIsPremium}:{user:User|null;visible:boolean;onClose:()=>void;onChat:(userId:string,user:User)=>void;isFavorite:boolean;onToggleFavorite:(userId:string)=>void;onBlock:(userId:string,name:string)=>void;onReport?:(userId:string,name:string)=>void;viewerIsPremium?:boolean}){
 const[photos,setPhotos]=useState<{id:string;photo_url:string;is_profile:boolean}[]>([])
 const[zoomPhoto,setZoomPhoto]=useState<string|null>(null)
@@ -93,10 +116,9 @@ return(
 </ScrollView>
 </View>
 <Modal visible={!!zoomPhoto} transparent animationType="fade">
-<TouchableOpacity style={{flex:1,backgroundColor:'rgba(0,0,0,0.95)',alignItems:'center',justifyContent:'center'}} onPress={()=>setZoomPhoto(null)}>
-<Image source={{uri:zoomPhoto||''}} style={{width:'95%',height:'70%',resizeMode:'contain'}}/>
-<Text style={{color:'rgba(255,255,255,0.5)',marginTop:20,fontSize:14}}>Tap to close</Text>
-</TouchableOpacity>
+<GestureHandlerRootView style={{flex:1}}>
+<ZoomableImage uri={zoomPhoto||''} onClose={()=>setZoomPhoto(null)}/>
+</GestureHandlerRootView>
 </Modal>
 </Modal>
 )
