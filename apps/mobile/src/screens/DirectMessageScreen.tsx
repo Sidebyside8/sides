@@ -1,11 +1,11 @@
 import{useEffect,useState,useRef}from'react'
-import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,KeyboardAvoidingView,Platform,Image,ActivityIndicator,Alert,Modal}from'react-native'
+import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,KeyboardAvoidingView,Platform,Image,ActivityIndicator,Alert,Modal,ScrollView}from'react-native'
 import{supabase}from'../lib/supabase'
 import ProfileModal from'../components/ProfileModal'
 import{launchImageLibraryAsync,launchCameraAsync,requestMediaLibraryPermissionsAsync,requestCameraPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
 import{notifyNewMessage}from'../lib/notifications'
 import{checkPremiumStatus}from'../lib/subscription'
-type Message={id:string;sender_id:string;recipient_id:string;content:string;created_at:string;read_at?:string;image_url?:string;is_disappearing?:boolean;disappears_at?:string;deleted_for_sender?:boolean;deleted_for_recipient?:boolean}
+type Message={id:string;sender_id:string;recipient_id:string;content:string;created_at:string;read_at?:string;image_url?:string;is_disappearing?:boolean;disappears_at?:string;deleted_for_sender?:boolean;deleted_for_recipient?:boolean;message_type?:string}
 type OtherUser={id:string;display_name:string;username:string;avatar_url?:string}
 export default function DirectMessageScreen({otherUser,onBack}:{otherUser:OtherUser;onBack:()=>void}){
 const[messages,setMessages]=useState<Message[]>([])
@@ -18,12 +18,19 @@ const[isPremium,setIsPremium]=useState(false)
 const[disappearingMode,setDisappearingMode]=useState(false)
 const[viewingDisappearing,setViewingDisappearing]=useState<Message|null>(null)
 const[disappearCountdown,setDisappearCountdown]=useState(30)
+const[showPrivateAlbum,setShowPrivateAlbum]=useState(false)
+const[privatePhotos,setPrivatePhotos]=useState<{id:string;photo_url:string}[]>([])
+const[otherAlbumPhotos,setOtherAlbumPhotos]=useState<{id:string;photo_url:string}[]>([])
+const[showOtherAlbum,setShowOtherAlbum]=useState(false)
+const[albumAccess,setAlbumAccess]=useState<string|null>(null)
 const flatListRef=useRef<FlatList>(null)
 const countdownRef=useRef<any>(null)
 useEffect(()=>{
 loadMessages()
 markMessagesRead()
 checkPremiumStatus().then(p=>setIsPremium(p))
+loadMyPrivatePhotos()
+checkAlbumAccess()
 },[])
 useEffect(()=>{
 if(viewingDisappearing){
@@ -41,6 +48,18 @@ const markMessagesRead=async()=>{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
 await supabase.from('direct_messages').update({read_at:new Date().toISOString()}).eq('recipient_id',user.id).eq('sender_id',otherUser.id).is('read_at',null)
+}
+const loadMyPrivatePhotos=async()=>{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+const{data}=await supabase.from('private_photos').select('*').eq('user_id',user.id)
+setPrivatePhotos(data||[])
+}
+const checkAlbumAccess=async()=>{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+const{data}=await supabase.from('private_album_access').select('*').eq('owner_id',otherUser.id).eq('viewer_id',user.id).single()
+if(data)setAlbumAccess(data.status)
 }
 const loadMessages=async()=>{
 const{data:{user}}=await supabase.auth.getUser()
@@ -67,6 +86,8 @@ if(msg.recipient_id===user.id)supabase.from('direct_messages').update({read_at:n
 }).on('postgres_changes',{event:'UPDATE',schema:'public',table:'direct_messages'},payload=>{
 const msg=payload.new as Message
 setMessages(prev=>prev.map(m=>m.id===msg.id?msg:m))
+}).on('postgres_changes',{event:'UPDATE',schema:'public',table:'private_album_access'},payload=>{
+if(payload.new.status==='accepted')setAlbumAccess('accepted')
 }).subscribe()
 return()=>{supabase.removeChannel(channel)}
 }
@@ -82,12 +103,7 @@ if(ue){Alert.alert('Upload failed',ue.message);setUploadingImage(false);return}
 const{data:ud}=supabase.storage.from('avatars').getPublicUrl(fileName)
 const disappearsAt=disappearingMode?new Date(Date.now()+30000).toISOString():null
 const{data,error}=await supabase.from('direct_messages').insert({
-sender_id:currentUserId,
-recipient_id:otherUser.id,
-content:'📷 Photo',
-image_url:ud.publicUrl,
-is_disappearing:disappearingMode,
-disappears_at:disappearsAt
+sender_id:currentUserId,recipient_id:otherUser.id,content:'📷 Photo',image_url:ud.publicUrl,is_disappearing:disappearingMode,disappears_at:disappearsAt
 }).select().single()
 if(!error&&data)setMessages(prev=>[...prev,data])
 flatListRef.current?.scrollToEnd({animated:true})
@@ -116,11 +132,7 @@ if(!newMessage.trim()||!currentUserId)return
 setSending(true)
 const content=newMessage.trim()
 setNewMessage('')
-const{data,error}=await supabase.from('direct_messages').insert({
-sender_id:currentUserId,
-recipient_id:otherUser.id,
-content
-}).select().single()
+const{data,error}=await supabase.from('direct_messages').insert({sender_id:currentUserId,recipient_id:otherUser.id,content}).select().single()
 if(!error&&data){
 setMessages(prev=>[...prev,data])
 try{
@@ -132,6 +144,34 @@ await notifyNewMessage(otherUser.id,myProfile?.display_name||'Someone',content)
 }
 setSending(false)
 flatListRef.current?.scrollToEnd({animated:true})
+}
+const handleSharePrivateAlbum=async()=>{
+if(privatePhotos.length===0){Alert.alert('No Photos','Add photos to your private album in your Profile first.');return}
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+const{data:otherUser_}=await supabase.from('users').select('is_album_locked').eq('id',user.id).single()
+const{data,error}=await supabase.from('direct_messages').insert({
+sender_id:currentUserId,recipient_id:otherUser.id,content:'🔒 __ALBUM_SHARE_REQUEST__',message_type:'album_request'
+}).select().single()
+if(!error&&data)setMessages(prev=>[...prev,data])
+flatListRef.current?.scrollToEnd({animated:true})
+}
+const handleAcceptAlbum=async(senderId:string)=>{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+const{data:existing}=await supabase.from('private_album_access').select('*').eq('owner_id',user.id).eq('viewer_id',senderId).single()
+if(existing){
+await supabase.from('private_album_access').update({status:'accepted'}).eq('id',existing.id)
+}else{
+await supabase.from('private_album_access').insert({owner_id:user.id,viewer_id:senderId,status:'accepted'})
+}
+await supabase.from('direct_messages').insert({sender_id:currentUserId,recipient_id:otherUser.id,content:'✅ Album access granted! You can now view my private photos.',message_type:'album_accepted'}).select().single()
+Alert.alert('Access Granted','They can now view your private album in chat.')
+}
+const handleViewOtherAlbum=async()=>{
+const{data}=await supabase.from('private_photos').select('*').eq('user_id',otherUser.id)
+setOtherAlbumPhotos(data||[])
+setShowOtherAlbum(true)
 }
 const handleDeleteChat=async()=>{
 if(!currentUserId)return
@@ -165,6 +205,56 @@ const h=Math.floor(m/60)
 if(h<24)return h+'h'
 return Math.floor(h/24)+'d'
 }
+const renderMessage=({item}:{item:Message})=>{
+const isMe=item.sender_id===currentUserId
+const isRead=isMe&&!!item.read_at
+if(item.message_type==='album_request'&&!isMe){
+return(
+<View style={[s.bubble,s.theirBubble]}>
+<Text style={{color:'#ffffff',fontSize:14,marginBottom:8}}>🔒 wants to share their private album with you</Text>
+<TouchableOpacity style={{backgroundColor:'#2196F3',borderRadius:10,padding:8,alignItems:'center'}} onPress={()=>handleAcceptAlbum(item.sender_id)}>
+<Text style={{color:'#ffffff',fontWeight:'700'}}>Accept & Share Mine</Text>
+</TouchableOpacity>
+<Text style={s.timeText}>{timeAgo(item.created_at)}</Text>
+</View>
+)
+}
+if(item.message_type==='album_accepted'&&!isMe){
+return(
+<View style={[s.bubble,s.theirBubble]}>
+<TouchableOpacity onPress={handleViewOtherAlbum}>
+<Text style={{color:'#ffffff',fontSize:14}}>✅ Album access granted!</Text>
+<Text style={{color:'#7EC8F5',fontSize:13,marginTop:4}}>Tap to view private album 👁️</Text>
+</TouchableOpacity>
+<Text style={s.timeText}>{timeAgo(item.created_at)}</Text>
+</View>
+)
+}
+return(
+<View style={[s.bubble,isMe?s.myBubble:s.theirBubble]}>
+{item.is_disappearing&&!isMe?(
+<TouchableOpacity onPress={()=>handleViewDisappearing(item)} style={{alignItems:'center',padding:8}}>
+<Text style={{fontSize:32}}>🔥</Text>
+<Text style={{color:'#ffffff',fontSize:12,marginTop:4}}>Tap to view (disappears in 30s)</Text>
+</TouchableOpacity>
+):(
+<>
+{item.image_url?<Image source={{uri:item.image_url}} style={{width:200,height:200,borderRadius:12,marginBottom:4}}/>:null}
+{item.content!=='📷 Photo'&&item.content!=='🔒 __ALBUM_SHARE_REQUEST__'&&<Text style={[s.bubbleText,isMe?s.myText:s.theirText]}>{item.content}</Text>}
+{item.is_disappearing&&isMe&&<Text style={{color:'rgba(255,255,255,0.6)',fontSize:10,marginTop:2}}>🔥 Disappearing</Text>}
+</>
+)}
+<View style={{flexDirection:'row',justifyContent:'flex-end',alignItems:'center',gap:4}}>
+<Text style={s.timeText}>{timeAgo(item.created_at)}</Text>
+</View>
+{isMe&&isPremium&&(
+<Text style={{fontSize:10,color:'rgba(255,255,255,0.85)',fontStyle:'italic',alignSelf:'flex-end',marginTop:2}}>
+{isRead?'Read':'✓ Sent'}
+</Text>
+)}
+</View>
+)
+}
 return(
 <KeyboardAvoidingView style={s.container} behavior={Platform.OS==='ios'?'padding':'height'}>
 <View style={s.header}>
@@ -186,34 +276,7 @@ return(
 contentContainerStyle={s.messagesList}
 onContentSizeChange={()=>flatListRef.current?.scrollToEnd({animated:false})}
 ListEmptyComponent={<View style={s.empty}><Text style={s.emptyText}>No messages yet{'\n'}Say hello! 👋</Text></View>}
-renderItem={({item})=>{
-const isMe=item.sender_id===currentUserId
-const isRead=isMe&&!!item.read_at
-return(
-<View style={[s.bubble,isMe?s.myBubble:s.theirBubble]}>
-{item.is_disappearing&&!isMe?(
-<TouchableOpacity onPress={()=>handleViewDisappearing(item)} style={{alignItems:'center',padding:8}}>
-<Text style={{fontSize:32}}>🔥</Text>
-<Text style={{color:'#ffffff',fontSize:12,marginTop:4}}>Tap to view (disappears in 30s)</Text>
-</TouchableOpacity>
-):(
-<>
-{item.image_url?<Image source={{uri:item.image_url}} style={{width:200,height:200,borderRadius:12,marginBottom:4}}/>:null}
-{item.content!=='📷 Photo'&&<Text style={[s.bubbleText,isMe?s.myText:s.theirText]}>{item.content}</Text>}
-{item.is_disappearing&&isMe&&<Text style={{color:'rgba(255,255,255,0.6)',fontSize:10,marginTop:2}}>🔥 Disappearing</Text>}
-</>
-)}
-<View style={{flexDirection:'row',justifyContent:'flex-end',alignItems:'center',gap:4}}>
-<Text style={s.timeText}>{timeAgo(item.created_at)}</Text>
-</View>
-{isMe&&isPremium&&(
-<Text style={{fontSize:10,color:'rgba(255,255,255,0.85)',fontStyle:'italic',alignSelf:'flex-end',marginTop:2}}>
-{isRead?'Read':'✓ Sent'}
-</Text>
-)}
-</View>
-)
-}}/>
+renderItem={renderMessage}/>
 <View style={s.inputRow}>
 {isPremium&&(
 <TouchableOpacity style={[s.disappearBtn,disappearingMode&&s.disappearBtnActive]} onPress={()=>setDisappearingMode(!disappearingMode)}>
@@ -223,7 +286,10 @@ return(
 <TouchableOpacity style={s.imageBtn} onPress={handleSendImage} disabled={uploadingImage}>
 {uploadingImage?<ActivityIndicator color="#ffffff" size="small"/>:<Text style={s.imageBtnText}>📷</Text>}
 </TouchableOpacity>
-<TextInput style={s.input} placeholder={disappearingMode?"Disappearing message...":'Message...'} placeholderTextColor="rgba(10,22,40,0.4)"
+<TouchableOpacity style={s.albumBtn} onPress={handleSharePrivateAlbum}>
+<Text style={{fontSize:16}}>🔒</Text>
+</TouchableOpacity>
+<TextInput style={s.input} placeholder={disappearingMode?'Disappearing message...':'Message...'} placeholderTextColor="rgba(10,22,40,0.4)"
 value={newMessage} onChangeText={setNewMessage} multiline
 returnKeyType="send" onSubmitEditing={handleSend}/>
 <TouchableOpacity style={[s.sendBtn,(!newMessage.trim()||sending)&&s.sendDisabled]}
@@ -242,12 +308,29 @@ onPress={handleSend} disabled={!newMessage.trim()||sending}>
 </TouchableOpacity>
 </View>
 </Modal>
+<Modal visible={showOtherAlbum} transparent animationType="slide">
+<View style={{flex:1,backgroundColor:'rgba(0,0,0,0.95)',padding:24}}>
+<View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:20,paddingTop:40}}>
+<Text style={{color:'#ffffff',fontSize:20,fontWeight:'800'}}>🔒 Private Album</Text>
+<TouchableOpacity onPress={()=>setShowOtherAlbum(false)} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
+<Text style={{color:'#ffffff',fontSize:18}}>✕</Text>
+</TouchableOpacity>
+</View>
+{otherAlbumPhotos.length===0
+?<View style={{flex:1,alignItems:'center',justifyContent:'center'}}><Text style={{color:'rgba(255,255,255,0.6)',fontSize:16}}>No photos in this album yet</Text></View>
+:<ScrollView contentContainerStyle={{flexDirection:'row',flexWrap:'wrap',gap:8}}>
+{otherAlbumPhotos.map(p=>(
+<Image key={p.id} source={{uri:p.photo_url}} style={{width:150,height:150,borderRadius:12}}/>
+))}
+</ScrollView>}
+</View>
+</Modal>
 </KeyboardAvoidingView>
 )
 }
 const s=StyleSheet.create({
 container:{flex:1},
-header:{flexDirection:'row',alignItems:'center',paddingTop:Platform.OS==='android'?40:60,paddingHorizontal:16,paddingBottom:16,backgroundColor:'rgba(0,0,0,0.3)'},
+header:{flexDirection:'row',alignItems:'center',paddingTop:Platform.OS==='android'?40:60,paddingHorizontal:16,paddingBottom:16,backgroundColor:'#0A2A4A'},
 backBtn:{marginRight:12},
 backText:{color:'#2196F3',fontSize:18,fontWeight:'600'},
 headerInfo:{flexDirection:'row',alignItems:'center',flex:1},
@@ -270,6 +353,7 @@ inputRow:{flexDirection:'row',padding:12,backgroundColor:'rgba(255,255,255,0.05)
 input:{flex:1,backgroundColor:'rgba(255,255,255,0.95)',borderRadius:20,paddingHorizontal:16,paddingVertical:10,color:'#0A1628',fontSize:15,maxHeight:100,marginRight:8,borderWidth:1,borderColor:'rgba(255,255,255,0.3)'},
 imageBtn:{backgroundColor:'rgba(255,255,255,0.2)',borderRadius:20,width:40,height:40,alignItems:'center',justifyContent:'center',marginRight:8},
 imageBtnText:{fontSize:20},
+albumBtn:{backgroundColor:'rgba(255,255,255,0.1)',borderRadius:20,width:40,height:40,alignItems:'center',justifyContent:'center',marginRight:8,borderWidth:1,borderColor:'rgba(255,255,255,0.3)'},
 disappearBtn:{backgroundColor:'rgba(255,255,255,0.1)',borderRadius:20,width:40,height:40,alignItems:'center',justifyContent:'center',marginRight:8},
 disappearBtnActive:{backgroundColor:'rgba(255,140,0,0.5)',borderWidth:1,borderColor:'#FF8C00'},
 sendBtn:{backgroundColor:'#2196F3',borderRadius:20,paddingHorizontal:16,paddingVertical:10},

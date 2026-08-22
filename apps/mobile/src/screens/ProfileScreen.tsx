@@ -1,29 +1,14 @@
 import{useEffect,useState}from'react'
-import{View,Text,TouchableOpacity,StyleSheet,ScrollView,Alert,Image,TextInput}from'react-native'
+import{View,Text,TouchableOpacity,StyleSheet,ScrollView,Alert,Image,TextInput,Modal}from'react-native'
 import{supabase}from'../lib/supabase'
 import{launchImageLibraryAsync,launchCameraAsync,requestMediaLibraryPermissionsAsync,requestCameraPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
 import SydeHeader from'../components/SydeHeader'
 import BlockedUsersScreen from'./BlockedUsersScreen'
 import PhotosManager from'../components/PhotosManager'
 
-const PREFERENCES=[
-'Kissing and making out',
-'Cuddling and physical affection',
-'Mutual masturbation',
-'Oral sex (giving and/or receiving)',
-'Frottage (body-to-body rubbing or grinding)',
-'Nipple play',
-'Erotic massage',
-'Sensual touching and caressing',
-'Hand jobs',
-'Sexting or sharing fantasies',
-'Using sex toys',
-'Role-play and erotic play',
-'Showering or bathing together',
-'Intimate companionship and emotional connection',
-]
+const PREFERENCES=['Kissing and making out','Cuddling and physical affection','Mutual masturbation','Oral sex (giving and/or receiving)','Frottage (body-to-body rubbing or grinding)','Nipple play','Erotic massage','Sensual touching and caressing','Hand jobs','Sexting or sharing fantasies','Using sex toys','Role-play and erotic play','Showering or bathing together','Intimate companionship and emotional connection']
 
-type Profile={id:string;username:string;display_name:string;title?:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[]}
+type Profile={id:string;username:string;display_name:string;title?:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[];is_album_locked?:boolean}
 
 export default function ProfileScreen({onUpgrade,isPremium}:{onUpgrade?:()=>void;isPremium?:boolean}){
 const[profile,setProfile]=useState<Profile|null>(null)
@@ -33,16 +18,27 @@ const[editData,setEditData]=useState<Partial<Profile>>({})
 const[saving,setSaving]=useState(false)
 const[showBlocked,setShowBlocked]=useState(false)
 const[uploadingPhoto,setUploadingPhoto]=useState(false)
+const[privatePhotos,setPrivatePhotos]=useState<{id:string;photo_url:string}[]>([])
+const[uploadingPrivate,setUploadingPrivate]=useState(false)
+const[isAlbumLocked,setIsAlbumLocked]=useState(true)
+const[zoomPhoto,setZoomPhoto]=useState<string|null>(null)
+const maxPrivatePhotos=isPremium?6:3
 
-useEffect(()=>{loadProfile()},[])
+useEffect(()=>{loadProfile();loadPrivatePhotos()},[])
 
 const loadProfile=async()=>{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
 const{data}=await supabase.from('users').select('*').eq('id',user.id).single()
-if(data){setProfile(data);setEditData(data)}
-
+if(data){setProfile(data);setEditData(data);setIsAlbumLocked(data.is_album_locked!==false)}
 setLoading(false)
+}
+
+const loadPrivatePhotos=async()=>{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+const{data}=await supabase.from('private_photos').select('*').eq('user_id',user.id).order('created_at',{ascending:true})
+setPrivatePhotos(data||[])
 }
 
 const uploadPhoto=async(uri:string,base64?:string)=>{
@@ -50,41 +46,92 @@ setUploadingPhoto(true)
 try{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
-const fileName=user.id+"-"+Date.now()+".jpg"
-let uploadData:any
-if(base64){
-const byteArray=Uint8Array.from(atob(base64),c=>c.charCodeAt(0))
-uploadData=byteArray
-}else{
-const response=await fetch(uri)
-uploadData=await response.arrayBuffer()
-}
-const{error:ue}=await supabase.storage.from("avatars").upload(fileName,uploadData,{contentType:"image/jpeg",upsert:true})
-if(ue){Alert.alert("Upload failed",ue.message);setUploadingPhoto(false);return}
-const{data:ud}=supabase.storage.from("avatars").getPublicUrl(fileName)
-await supabase.from("users").update({avatar_url:ud.publicUrl}).eq("id",user.id)
+const fileName=user.id+'-'+Date.now()+'.jpg'
+const byteArray=Uint8Array.from(atob(base64||''),c=>c.charCodeAt(0))
+const{error:ue}=await supabase.storage.from('avatars').upload(fileName,byteArray,{contentType:'image/jpeg',upsert:true})
+if(ue){Alert.alert('Upload failed',ue.message);setUploadingPhoto(false);return}
+const{data:ud}=supabase.storage.from('avatars').getPublicUrl(fileName)
+await supabase.from('users').update({avatar_url:ud.publicUrl}).eq('id',user.id)
 setProfile(prev=>prev?{...prev,avatar_url:ud.publicUrl}:prev)
-Alert.alert("Photo updated!","Profile photo updated")
-}catch(e:any){Alert.alert("Error",e.message||"Upload failed")}
+Alert.alert('Photo updated!','Profile photo updated')
+}catch(e:any){Alert.alert('Error',e.message||'Upload failed')}
 setUploadingPhoto(false)
 }
+
 const handlePickPhoto=async()=>{
-Alert.alert("Profile Photo","Choose how to add your photo",[
-{text:"Take Photo",onPress:async()=>{
+Alert.alert('Profile Photo','Choose how to add your photo',[
+{text:'Take Photo',onPress:async()=>{
 const perm=await requestCameraPermissionsAsync()
-if(perm.granted===false){Alert.alert("Permission needed","Please allow camera access");return}
+if(!perm.granted){Alert.alert('Permission needed','Please allow camera access');return}
 const result=await launchCameraAsync({allowsEditing:true,aspect:[1,1],quality:0.7,base64:true})
 if(!result.canceled)await uploadPhoto(result.assets[0].uri,result.assets[0].base64||undefined)
 }},
-{text:"Choose from Library",onPress:async()=>{
+{text:'Choose from Library',onPress:async()=>{
 const perm=await requestMediaLibraryPermissionsAsync()
-if(perm.granted===false){Alert.alert("Permission needed","Please allow photo library access");return}
+if(!perm.granted){Alert.alert('Permission needed','Please allow photo library access');return}
 const result=await launchImageLibraryAsync({mediaTypes:MediaTypeOptions.Images,allowsEditing:true,aspect:[1,1],quality:0.7,base64:true})
 if(!result.canceled)await uploadPhoto(result.assets[0].uri,result.assets[0].base64||undefined)
 }},
-{text:"Cancel",style:"cancel"}
+{text:'Cancel',style:'cancel'}
 ])
 }
+
+const handleAddPrivatePhoto=async()=>{
+if(privatePhotos.length>=maxPrivatePhotos){
+Alert.alert('Limit Reached',isPremium?'Premium users can add up to 6 private photos.':'Free users can add up to 3 private photos. Upgrade to Premium for 6!')
+return
+}
+Alert.alert('Add Private Photo','Choose how to add your photo',[
+{text:'Take Photo',onPress:async()=>{
+const perm=await requestCameraPermissionsAsync()
+if(!perm.granted){Alert.alert('Permission needed','Please allow camera access');return}
+const result=await launchCameraAsync({allowsEditing:true,quality:0.7,base64:true})
+if(!result.canceled&&result.assets[0].base64)await uploadPrivatePhoto(result.assets[0].base64)
+}},
+{text:'Choose from Library',onPress:async()=>{
+const perm=await requestMediaLibraryPermissionsAsync()
+if(!perm.granted){Alert.alert('Permission needed','Please allow photo library access');return}
+const result=await launchImageLibraryAsync({mediaTypes:MediaTypeOptions.Images,allowsEditing:true,quality:0.7,base64:true})
+if(!result.canceled&&result.assets[0].base64)await uploadPrivatePhoto(result.assets[0].base64)
+}},
+{text:'Cancel',style:'cancel'}
+])
+}
+
+const uploadPrivatePhoto=async(base64:string)=>{
+setUploadingPrivate(true)
+try{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+const fileName=user.id+'-priv-'+Date.now()+'.jpg'
+const byteArray=Uint8Array.from(atob(base64),c=>c.charCodeAt(0))
+const{error:ue}=await supabase.storage.from('avatars').upload(fileName,byteArray,{contentType:'image/jpeg',upsert:true})
+if(ue){Alert.alert('Upload failed',ue.message);setUploadingPrivate(false);return}
+const{data:ud}=supabase.storage.from('avatars').getPublicUrl(fileName)
+const{data,error}=await supabase.from('private_photos').insert({user_id:user.id,photo_url:ud.publicUrl}).select().single()
+if(!error&&data)setPrivatePhotos(prev=>[...prev,data])
+}catch(e:any){Alert.alert('Error',e.message)}
+setUploadingPrivate(false)
+}
+
+const handleDeletePrivatePhoto=async(photoId:string)=>{
+Alert.alert('Delete Photo','Remove this photo from your private album?',[
+{text:'Cancel',style:'cancel'},
+{text:'Delete',style:'destructive',onPress:async()=>{
+await supabase.from('private_photos').delete().eq('id',photoId)
+setPrivatePhotos(prev=>prev.filter(p=>p.id!==photoId))
+}}
+])
+}
+
+const handleToggleAlbumLock=async()=>{
+const next=!isAlbumLocked
+setIsAlbumLocked(next)
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+await supabase.from('users').update({is_album_locked:next}).eq('id',user.id)
+}
+
 const handleSave=async()=>{
 setSaving(true)
 const{data:{user}}=await supabase.auth.getUser()
@@ -119,12 +166,11 @@ Alert.alert('Final Confirmation','All your data, matches, and messages will be p
 try{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
-await supabase.from('messages').delete().eq('sender_id',user.id)
-await supabase.from('direct_messages').delete().eq('sender_id',user.id).or('recipient_id.eq.'+user.id)
-await supabase.from('matches').delete().or('user1_id.eq.'+user.id+',user2_id.eq.'+user.id)
+await supabase.from('direct_messages').delete().eq('sender_id',user.id)
 await supabase.from('likes').delete().eq('liker_id',user.id)
 await supabase.from('favorites').delete().eq('user_id',user.id)
 await supabase.from('blocks').delete().eq('blocker_id',user.id)
+await supabase.from('private_photos').delete().eq('user_id',user.id)
 await supabase.from('community_posts').delete().eq('user_id',user.id)
 await supabase.from('events').delete().eq('user_id',user.id)
 await supabase.from('users').delete().eq('id',user.id)
@@ -135,6 +181,7 @@ await supabase.auth.signOut()
 }}
 ])
 }
+
 const handleSignOut=async()=>{
 Alert.alert('Sign Out','Are you sure?',[
 {text:'Cancel',style:'cancel'},
@@ -152,6 +199,7 @@ const editButton=(
 )
 
 return(
+<View style={{flex:1}}>
 <ScrollView style={s.container} contentContainerStyle={s.content}>
 <SydeHeader title="Profile" rightAction={editButton}/>
 
@@ -160,7 +208,7 @@ return(
 <View style={s.avatar}>
 {profile?.avatar_url?<Image source={{uri:profile.avatar_url}} style={s.avatarImage}/>:<Text style={s.avatarText}>{profile?.display_name?.[0]||'?'}</Text>}
 </View>
-<View style={s.cameraButton}><Text style={s.cameraIcon}>{uploadingPhoto?"⏳":"📷"}</Text></View>
+<View style={s.cameraButton}><Text style={s.cameraIcon}>{uploadingPhoto?'⏳':'📷'}</Text></View>
 </TouchableOpacity>
 {editing?<TextInput style={s.editNameInput} value={editData.display_name} onChangeText={v=>setEditData(prev=>({...prev,display_name:v}))} placeholder="Display name" placeholderTextColor="#888"/>
 :<Text style={s.displayName}>{profile?.display_name}</Text>}
@@ -170,23 +218,47 @@ return(
 <PhotosManager isPremium={isPremium||false}/>
 
 <View style={s.infoCard}>
+<View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+<Text style={s.sectionTitle}>🔒 Private Album</Text>
+<TouchableOpacity onPress={handleToggleAlbumLock} style={[s.lockToggle,!isAlbumLocked&&s.lockToggleUnlocked]}>
+<Text style={s.lockToggleText}>{isAlbumLocked?'🔒 Locked':'🔓 Unlocked'}</Text>
+</TouchableOpacity>
+</View>
+<Text style={{color:'rgba(255,255,255,0.6)',fontSize:12,marginBottom:12}}>
+{isAlbumLocked?'Your album is private. Unlock to allow others to request access in chat.':'Your album is unlocked. People can request access in chat.'}
+{' '}{privatePhotos.length}/{maxPrivatePhotos} photos
+</Text>
+<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8}}>
+{privatePhotos.map(p=>(
+<TouchableOpacity key={p.id} onLongPress={()=>handleDeletePrivatePhoto(p.id)} onPress={()=>setZoomPhoto(p.photo_url)}>
+<Image source={{uri:p.photo_url}} style={s.privatePhoto}/>
+<View style={s.deleteHint}><Text style={{color:'rgba(255,255,255,0.5)',fontSize:9,textAlign:'center'}}>Hold to delete</Text></View>
+</TouchableOpacity>
+))}
+{privatePhotos.length<maxPrivatePhotos&&(
+<TouchableOpacity style={s.addPrivateBtn} onPress={handleAddPrivatePhoto} disabled={uploadingPrivate}>
+<Text style={{fontSize:28}}>{uploadingPrivate?'⏳':'+'}</Text>
+<Text style={{color:'rgba(255,255,255,0.6)',fontSize:11,marginTop:4}}>Add Photo</Text>
+</TouchableOpacity>
+)}
+</ScrollView>
+{!isPremium&&<TouchableOpacity onPress={onUpgrade} style={{marginTop:8}}><Text style={{color:'#F5A623',fontSize:12,textAlign:'center'}}>👑 Upgrade for 6 private photos</Text></TouchableOpacity>}
+</View>
+
+<View style={s.infoCard}>
 <Text style={s.sectionTitle}>About Me</Text>
 <Text style={s.infoLabel}>Title (15 chars max)</Text>
 {editing?<TextInput style={s.editInput} value={editData.title} onChangeText={v=>setEditData(prev=>({...prev,title:v.slice(0,15)}))} placeholder="e.g. Looking for love" placeholderTextColor="rgba(255,255,255,0.6)" maxLength={15}/>:<Text style={s.infoValue}>{profile?.title||'Not set'}</Text>}
 <Text style={s.infoLabel}>Bio</Text>
-{editing?<TextInput style={[s.editInput,s.bioInput]} value={editData.bio} onChangeText={v=>setEditData(prev=>({...prev,bio:v}))} placeholder="Tell people about yourself..." placeholderTextColor="#888" multiline/>
-:<Text style={s.infoValue}>{profile?.bio||'No bio yet'}</Text>}
+{editing?<TextInput style={[s.editInput,s.bioInput]} value={editData.bio} onChangeText={v=>setEditData(prev=>({...prev,bio:v}))} placeholder="Tell people about yourself..." placeholderTextColor="#888" multiline/>:<Text style={s.infoValue}>{profile?.bio||'No bio yet'}</Text>}
 <Text style={s.infoLabel}>Age</Text>
 <Text style={s.infoValue}>{profile?.age}</Text>
 <Text style={s.infoLabel}>Location</Text>
-{editing?<TextInput style={s.editInput} value={editData.location} onChangeText={v=>setEditData(prev=>({...prev,location:v}))} placeholder="e.g. New York, NY" placeholderTextColor="#888"/>
-:<Text style={s.infoValue}>{profile?.location||'Not set'}</Text>}
+{editing?<TextInput style={s.editInput} value={editData.location} onChangeText={v=>setEditData(prev=>({...prev,location:v}))} placeholder="e.g. New York, NY" placeholderTextColor="#888"/>:<Text style={s.infoValue}>{profile?.location||'Not set'}</Text>}
 <Text style={s.infoLabel}>Looking For</Text>
-{editing?<TextInput style={s.editInput} value={editData.looking_for} onChangeText={v=>setEditData(prev=>({...prev,looking_for:v}))} placeholder="e.g. Friends, Dating, Relationship" placeholderTextColor="#888"/>
-:<Text style={s.infoValue}>{profile?.looking_for||'Not set'}</Text>}
+{editing?<TextInput style={s.editInput} value={editData.looking_for} onChangeText={v=>setEditData(prev=>({...prev,looking_for:v}))} placeholder="e.g. Friends, Dating, Relationship" placeholderTextColor="#888"/>:<Text style={s.infoValue}>{profile?.looking_for||'Not set'}</Text>}
 <Text style={s.infoLabel}>Relationship Type</Text>
-{editing?<TextInput style={s.editInput} value={editData.relationship_type} onChangeText={v=>setEditData(prev=>({...prev,relationship_type:v}))} placeholder="e.g. Monogamous, Open, Casual" placeholderTextColor="#888"/>
-:<Text style={s.infoValue}>{profile?.relationship_type||'Not set'}</Text>}
+{editing?<TextInput style={s.editInput} value={editData.relationship_type} onChangeText={v=>setEditData(prev=>({...prev,relationship_type:v}))} placeholder="e.g. Monogamous, Open, Casual" placeholderTextColor="#888"/>:<Text style={s.infoValue}>{profile?.relationship_type||'Not set'}</Text>}
 </View>
 
 <View style={s.infoCard}>
@@ -197,12 +269,7 @@ const selected=(editing?editData.preferences:profile?.preferences)||[]
 const isSelected=selected.includes(pref)
 if(!editing&&!isSelected)return null
 return(
-<TouchableOpacity
-key={pref}
-style={[s.prefItem,isSelected&&s.prefItemSelected]}
-onPress={()=>editing&&togglePreference(pref)}
-activeOpacity={editing?0.7:1}
->
+<TouchableOpacity key={pref} style={[s.prefItem,isSelected&&s.prefItemSelected]} onPress={()=>editing&&togglePreference(pref)} activeOpacity={editing?0.7:1}>
 <View style={[s.prefCheckbox,isSelected&&s.prefCheckboxSelected]}>
 {isSelected&&<Text style={s.prefCheckmark}>✓</Text>}
 </View>
@@ -223,7 +290,6 @@ activeOpacity={editing?0.7:1}
 <TouchableOpacity style={s.blockedButton} onPress={()=>setShowBlocked(true)}>
 <Text style={s.blockedButtonText}>🚫 Manage Blocked Users</Text>
 </TouchableOpacity>
-
 <TouchableOpacity style={s.deleteAccountButton} onPress={handleDeleteAccount}>
 <Text style={s.deleteAccountText}>🗑️ Delete Account</Text>
 </TouchableOpacity>
@@ -231,11 +297,23 @@ activeOpacity={editing?0.7:1}
 <Text style={s.signOutText}>Sign Out</Text>
 </TouchableOpacity>
 </ScrollView>
+
+{editing&&<TouchableOpacity style={s.stickySaveBtn} onPress={handleSave}><Text style={s.stickySaveBtnText}>{saving?'Saving...':'Save Changes'}</Text></TouchableOpacity>}
+
+<Modal visible={!!zoomPhoto} transparent animationType="fade">
+<TouchableOpacity style={{flex:1,backgroundColor:'rgba(0,0,0,0.95)',alignItems:'center',justifyContent:'center'}} onPress={()=>setZoomPhoto(null)}>
+<Image source={{uri:zoomPhoto||''}} style={{width:'95%',height:'70%',resizeMode:'contain'}}/>
+<Text style={{color:'rgba(255,255,255,0.5)',marginTop:20,fontSize:14}}>Tap to close</Text>
+</TouchableOpacity>
+</Modal>
+</View>
 )
 }
 
 const s=StyleSheet.create({
 container:{flex:1,backgroundColor:'transparent'},
+stickySaveBtn:{backgroundColor:'#2196F3',margin:16,borderRadius:12,padding:16,alignItems:'center'},
+stickySaveBtnText:{color:'#ffffff',fontSize:16,fontWeight:'700'},
 content:{paddingBottom:40},
 editButton:{backgroundColor:'#2196F3',borderRadius:20,paddingHorizontal:16,paddingVertical:8},
 editButtonText:{color:'#ffffff',fontWeight:'600',fontSize:14},
@@ -248,11 +326,6 @@ cameraIcon:{fontSize:14},
 editNameInput:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:10,padding:10,color:'#ffffff',fontSize:20,fontWeight:'700',textAlign:'center',borderWidth:1,borderColor:'rgba(255,255,255,0.25)',marginBottom:4,width:'80%'},
 displayName:{color:'#ffffff',fontSize:22,fontWeight:'700',marginBottom:4},
 username:{color:'rgba(255,255,255,0.7)',fontSize:15},
-statsRow:{flexDirection:'row',backgroundColor:'rgba(255,255,255,0.15)',borderRadius:16,padding:16,marginHorizontal:24,marginBottom:16,borderWidth:1,borderColor:'rgba(255,255,255,0.25)'},
-statBox:{flex:1,alignItems:'center'},
-statNumber:{fontSize:24,fontWeight:'bold',color:'#2196F3'},
-statLabel:{fontSize:11,color:'rgba(255,255,255,0.7)',marginTop:2},
-statDivider:{width:1,backgroundColor:'rgba(0,0,0,0.1)'},
 infoCard:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:16,padding:16,marginHorizontal:24,borderWidth:1,borderColor:'rgba(255,255,255,0.25)',marginBottom:16},
 sectionTitle:{fontSize:16,fontWeight:'700',color:'#ffffff',marginBottom:4},
 prefSubtitle:{fontSize:12,color:'#778899',marginBottom:12},
@@ -260,6 +333,12 @@ infoLabel:{fontSize:12,color:'rgba(255,255,255,0.7)',fontWeight:'600',marginBott
 infoValue:{fontSize:15,color:'#ffffff',marginBottom:16,lineHeight:22},
 editInput:{backgroundColor:'rgba(255,255,255,0.8)',borderRadius:10,padding:12,color:'#ffffff',fontSize:15,marginBottom:16,borderWidth:1,borderColor:'rgba(255,255,255,0.9)'},
 bioInput:{height:80,textAlignVertical:'top'},
+lockToggle:{backgroundColor:'rgba(255,255,255,0.1)',borderRadius:20,paddingHorizontal:12,paddingVertical:6,borderWidth:1,borderColor:'rgba(255,255,255,0.2)'},
+lockToggleUnlocked:{backgroundColor:'rgba(33,150,243,0.3)',borderColor:'#2196F3'},
+lockToggleText:{color:'#ffffff',fontSize:12,fontWeight:'700'},
+privatePhoto:{width:80,height:80,borderRadius:10},
+deleteHint:{position:'absolute',bottom:0,left:0,right:0,backgroundColor:'rgba(0,0,0,0.4)',borderBottomLeftRadius:10,borderBottomRightRadius:10,paddingVertical:2},
+addPrivateBtn:{width:80,height:80,borderRadius:10,backgroundColor:'rgba(255,255,255,0.1)',borderWidth:1,borderColor:'rgba(255,255,255,0.3)',alignItems:'center',justifyContent:'center',borderStyle:'dashed'},
 prefItem:{flexDirection:'row',alignItems:'center',paddingVertical:10,borderBottomWidth:1,borderBottomColor:'rgba(0,0,0,0.05)'},
 prefItemSelected:{},
 prefCheckbox:{width:22,height:22,borderRadius:6,borderWidth:2,borderColor:'#2196F3',marginRight:12,alignItems:'center',justifyContent:'center',backgroundColor:'rgba(255,255,255,0.15)'},
