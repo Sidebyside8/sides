@@ -13,3 +13,4 @@ build
 .expo
 expo-env.d.ts
 supabase/.temp
+google-services.json
