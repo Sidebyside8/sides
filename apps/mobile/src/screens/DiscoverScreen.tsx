@@ -1,10 +1,11 @@
 import{useEffect,useState}from'react'
 import*as Location from'expo-location'
-import{View,Text,TouchableOpacity,StyleSheet,FlatList,Alert,Image,Dimensions,ScrollView,Linking}from'react-native'
+import{View,Text,TouchableOpacity,StyleSheet,FlatList,Alert,Image,Dimensions,ScrollView,Linking,Modal}from'react-native'
 import{supabase}from'../lib/supabase'
 import SydeHeader from'../components/SydeHeader'
 import ProfileModal from'../components/ProfileModal'
 import FavoritesScreen from'./FavoritesScreen'
+import SearchScreen from'./SearchScreen'
 
 const{width}=Dimensions.get('window')
 const CARD_SIZE=(width-48)/3
@@ -32,6 +33,8 @@ const[currentUserId,setCurrentUserId]=useState<string|null>(null)
 const[currentLocation,setCurrentLocation]=useState<string|null>(null)
 const[filter,setFilter]=useState('global')
 const[showAdvancedFilters,setShowAdvancedFilters]=useState(false)
+const[showWhoLikedMe,setShowWhoLikedMe]=useState(false)
+const[showSearch,setShowSearch]=useState(false)
 const[minAge,setMinAge]=useState(18)
 const[maxAge,setMaxAge]=useState(99)
 const[maxDistance,setMaxDistance]=useState(200)
@@ -253,6 +256,7 @@ return calcDistance(myCoords.lat,myCoords.lng,(user as any).latitude,(user as an
 const promo=AFFILIATE_PROMOS[promoIndex]
 const advancedFilterStyle={position:'absolute' as const,top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.85)',zIndex:100,justifyContent:'center' as const,padding:24}
 const favOverlayStyle={position:'absolute' as const,top:0,left:0,right:0,bottom:0,backgroundColor:'#0A2A4A',zIndex:90}
+const searchOverlayStyle={position:'absolute' as const,top:0,left:0,right:0,bottom:0,backgroundColor:'#0A2A4A',zIndex:95}
 
 return(
 <View style={s.container}>
@@ -269,6 +273,9 @@ leftAction={
 }
 rightAction={
 <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+<TouchableOpacity onPress={()=>setShowSearch(true)} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
+<Text style={{fontSize:18}}>🔍</Text>
+</TouchableOpacity>
 <TouchableOpacity onPress={()=>setShowFavorites(true)} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
 <Text style={{fontSize:18}}>⭐</Text>
 </TouchableOpacity>
@@ -291,42 +298,6 @@ rightAction={
 <Text style={s.affiliateCtaText}>{promo.cta} →</Text>
 </View>
 </TouchableOpacity>
-
-{whoLikedMe.length>0&&(
-<View style={s.newSection}>
-<View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingHorizontal:16,marginBottom:8}}>
-<Text style={s.newTitle}>❤️ Who Liked You</Text>
-{!isPremiumUser&&<TouchableOpacity onPress={()=>onUpgrade&&onUpgrade()}>
-<Text style={{color:'#F5A623',fontSize:12,fontWeight:'700'}}>Unlock all 👑</Text>
-</TouchableOpacity>}
-</View>
-<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:16,gap:10}}>
-{whoLikedMe.map((u:any,i:number)=>(
-<TouchableOpacity key={u.id+i} style={s.newCard} onPress={()=>{
-if((u as any).isBlurred){onUpgrade&&onUpgrade();return}
-setSelectedUser(u);setShowModal(true)
-}}>
-<View style={[s.newCardInner,{overflow:'hidden'}]}>
-{u.avatar_url
-?<Image source={{uri:u.avatar_url}} style={[s.newCardImage,(u as any).isBlurred&&{opacity:0.15}]}/>
-:<View style={[s.newCardImage,{backgroundColor:'rgba(255,100,100,0.4)',alignItems:'center',justifyContent:'center'}]}>
-<Text style={{color:'#fff',fontSize:22,fontWeight:'bold'}}>{(u as any).isBlurred?'?':u.display_name?.[0]||'?'}</Text>
-</View>}
-{(u as any).isBlurred&&(
-<View style={{position:'absolute',top:0,left:0,right:0,bottom:0,alignItems:'center',justifyContent:'center',backgroundColor:'rgba(0,0,0,0.5)'}}>
-<Text style={{fontSize:20}}>🔒</Text>
-</View>
-)}
-</View>
-<Text style={s.newCardName} numberOfLines={1}>{(u as any).isBlurred?'???':u.display_name}</Text>
-<View style={[s.newChatBtn,{backgroundColor:'rgba(255,100,100,0.3)',borderColor:'#ff6b6b'}]}>
-<Text style={s.newChatBtnText}>❤️</Text>
-</View>
-</TouchableOpacity>
-))}
-</ScrollView>
-</View>
-)}
 
 {newUsers.length>0&&(
 <View style={s.newSection}>
@@ -356,7 +327,7 @@ setSelectedUser(u);setShowModal(true)
 )}
 
 {!isPremiumUser&&(
-<View style={{paddingHorizontal:16,marginBottom:8}}>
+<View style={{paddingHorizontal:16,marginBottom:4}}>
 <Text style={{color:'rgba(255,255,255,0.5)',fontSize:11,textAlign:'right'}}>❤️ {likesUsedToday}/{LIKE_LIMIT} likes used today</Text>
 </View>
 )}
@@ -376,11 +347,44 @@ setSelectedUser(u);setShowModal(true)
 <TouchableOpacity style={[s.filterTab,isIncognito&&s.incognitoActive]} onPress={handleToggleIncognito}>
 <Text style={[s.filterText,isIncognito&&s.filterTextActive]}>🕶️ Incognito</Text>
 </TouchableOpacity>
+<TouchableOpacity style={[s.filterTab,showWhoLikedMe&&s.likesActive]} onPress={()=>setShowWhoLikedMe(!showWhoLikedMe)}>
+<Text style={[s.filterText,showWhoLikedMe&&s.filterTextActive]}>❤️ {whoLikedMe.length>0?whoLikedMe.length:''}</Text>
+</TouchableOpacity>
 </View>
 
 {filter==='nearby'&&!currentLocation&&(
 <View style={s.banner}>
 <Text style={s.bannerText}>Add your location in Profile to see nearby people</Text>
+</View>
+)}
+
+{showWhoLikedMe&&(
+<View style={{backgroundColor:'rgba(255,100,100,0.1)',marginHorizontal:16,marginBottom:12,borderRadius:16,padding:12,borderWidth:1,borderColor:'rgba(255,100,100,0.3)'}}>
+<View style={{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+<Text style={{color:'#ffffff',fontSize:14,fontWeight:'800'}}>❤️ Who Liked You</Text>
+{!isPremiumUser&&<TouchableOpacity onPress={()=>onUpgrade&&onUpgrade()}>
+<Text style={{color:'#F5A623',fontSize:12,fontWeight:'700'}}>Unlock all 👑</Text>
+</TouchableOpacity>}
+</View>
+{whoLikedMe.length===0
+?<Text style={{color:'rgba(255,255,255,0.6)',fontSize:13,textAlign:'center',paddingVertical:8}}>No likes yet — keep discovering!</Text>
+:<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:10}}>
+{whoLikedMe.map((u:any,i:number)=>(
+<TouchableOpacity key={u.id+i} style={{alignItems:'center',width:70}} onPress={()=>{
+if(u.isBlurred){onUpgrade&&onUpgrade();return}
+setShowWhoLikedMe(false);setSelectedUser(u);setShowModal(true)
+}}>
+<View style={{width:60,height:60,borderRadius:30,overflow:'hidden',borderWidth:2,borderColor:'#ff6b6b'}}>
+{u.avatar_url&&!u.isBlurred
+?<Image source={{uri:u.avatar_url}} style={{width:60,height:60}}/>
+:<View style={{width:60,height:60,backgroundColor:'rgba(255,100,100,0.3)',alignItems:'center',justifyContent:'center'}}>
+{u.isBlurred?<Text style={{fontSize:20}}>🔒</Text>:<Text style={{color:'#fff',fontSize:20,fontWeight:'bold'}}>{u.display_name?.[0]||'?'}</Text>}
+</View>}
+</View>
+<Text style={{color:'#ffffff',fontSize:9,marginTop:4,textAlign:'center'}} numberOfLines={1}>{u.isBlurred?'???':u.display_name}</Text>
+</TouchableOpacity>
+))}
+</ScrollView>}
 </View>
 )}
 
@@ -425,6 +429,12 @@ renderItem={({item})=>(
 {showFavorites&&(
 <View style={favOverlayStyle}>
 <FavoritesScreen onClose={()=>setShowFavorites(false)} onChat={(user)=>{setShowFavorites(false);setTimeout(()=>onChat(user),400)}}/>
+</View>
+)}
+
+{showSearch&&(
+<View style={searchOverlayStyle}>
+<SearchScreen onClose={()=>setShowSearch(false)} onChat={onChat} isPremium={isPremiumUser} onUpgrade={()=>{setShowSearch(false);onUpgrade&&onUpgrade()}}/>
 </View>
 )}
 
@@ -494,6 +504,7 @@ filterRow:{flexDirection:'row',marginHorizontal:16,marginBottom:12,backgroundCol
 filterTab:{flex:1,paddingVertical:8,alignItems:'center',borderRadius:10},
 filterTabActive:{backgroundColor:'#2196F3'},
 incognitoActive:{backgroundColor:'#5E35B1'},
+likesActive:{backgroundColor:'rgba(255,100,100,0.5)'},
 filterText:{fontSize:12,color:'rgba(255,255,255,0.7)',fontWeight:'500'},
 filterTextActive:{color:'#ffffff',fontWeight:'700'},
 banner:{marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(241,90,34,0.2)',borderRadius:10,padding:12,borderWidth:1,borderColor:'rgba(255,140,0,0.4)'},
