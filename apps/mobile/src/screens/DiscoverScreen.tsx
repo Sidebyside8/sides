@@ -6,6 +6,7 @@ import SydeHeader from'../components/SydeHeader'
 import ProfileModal from'../components/ProfileModal'
 import FavoritesScreen from'./FavoritesScreen'
 import SearchScreen from'./SearchScreen'
+import WhoLikedMeScreen from'./WhoLikedMeScreen'
 
 const{width}=Dimensions.get('window')
 const CARD_SIZE=(width-48)/3
@@ -432,7 +433,7 @@ renderItem={({item})=>(
 </View>
 )}
 
-{showSearch&&(
+{showWhoLikedMe&&(<View style={{position:'absolute',top:0,left:0,right:0,bottom:0,backgroundColor:'#0A2A4A',zIndex:92}}><WhoLikedMeScreen onClose={()=>setShowWhoLikedMe(false)} whoLikedMe={whoLikedMe} isPremium={isPremiumUser} onUpgrade={()=>{setShowWhoLikedMe(false);onUpgrade&&onUpgrade()}} onChat={(user)=>{setShowWhoLikedMe(false);setTimeout(()=>onChat(user),400)}}/></View>)}{showSearch&&(
 <View style={searchOverlayStyle}>
 <SearchScreen onClose={()=>setShowSearch(false)} onChat={onChat} isPremium={isPremiumUser} onUpgrade={()=>{setShowSearch(false);onUpgrade&&onUpgrade()}}/>
 </View>
