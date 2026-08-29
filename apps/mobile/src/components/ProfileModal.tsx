@@ -1,42 +1,37 @@
 import{useState,useEffect}from'react'
 import{View,Text,TouchableOpacity,StyleSheet,Modal,ScrollView,Image,Platform}from'react-native'
-import{GestureDetector,Gesture,GestureHandlerRootView}from'react-native-gesture-handler'
-import Animated,{useSharedValue,useAnimatedStyle,withSpring}from'react-native-reanimated'
 import{supabase}from'../lib/supabase'
-type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string}
-function ZoomableImage({uri,onClose}:{uri:string;onClose:()=>void}){
-const scale=useSharedValue(1)
-const savedScale=useSharedValue(1)
-const pinch=Gesture.Pinch()
-.onUpdate(e=>{scale.value=savedScale.value*e.scale})
-.onEnd(()=>{
-savedScale.value=scale.value
-if(scale.value<1){scale.value=withSpring(1);savedScale.value=1}
-if(scale.value>5){scale.value=withSpring(5);savedScale.value=5}
-})
-const animStyle=useAnimatedStyle(()=>({transform:[{scale:scale.value}]}))
-return(
-<TouchableOpacity style={{flex:1,backgroundColor:'rgba(0,0,0,0.95)',alignItems:'center',justifyContent:'center'}} onPress={onClose} activeOpacity={1}>
-<GestureDetector gesture={pinch}>
-<Animated.Image source={{uri}} style={[{width:'95%',height:'70%',resizeMode:'contain'},animStyle]}/>
-</GestureDetector>
-<Text style={{color:'rgba(255,255,255,0.5)',marginTop:20,fontSize:14}}>Pinch to zoom • Tap to close</Text>
-</TouchableOpacity>
-)
-}
-
+type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string;is_online?:boolean;last_seen?:string}
 export default function ProfileModal({user,visible,onClose,onChat,isFavorite,onToggleFavorite,onBlock,onReport,viewerIsPremium}:{user:User|null;visible:boolean;onClose:()=>void;onChat:(userId:string,user:User)=>void;isFavorite:boolean;onToggleFavorite:(userId:string)=>void;onBlock:(userId:string,name:string)=>void;onReport?:(userId:string,name:string)=>void;viewerIsPremium?:boolean}){
 const[photos,setPhotos]=useState<{id:string;photo_url:string;is_profile:boolean}[]>([])
 const[zoomPhoto,setZoomPhoto]=useState<string|null>(null)
+const[lastSeen,setLastSeen]=useState<string|null>(null)
+
 useEffect(()=>{
 if(user&&visible){
 supabase.from('user_photos').select('*').eq('user_id',user.id).order('created_at',{ascending:true}).then(({data})=>{
 const all=data||[]
 setPhotos(viewerIsPremium?all:all.slice(0,3))
 })
+supabase.from('users').select('last_seen,is_online').eq('id',user.id).single().then(({data})=>{
+if(data)setLastSeen(data.last_seen)
+})
 }
 },[user,visible,viewerIsPremium])
+
+const getOnlineStatus=()=>{
+if(!lastSeen&&!user?.is_online)return{dot:'#555555',label:'Offline'}
+if(user?.is_online)return{dot:'#00E676',label:'Online now'}
+const mins=Math.floor((Date.now()-new Date(lastSeen||0).getTime())/60000)
+if(mins<60)return{dot:'#FFD600',label:`Last seen ${mins}m ago`}
+const hrs=Math.floor(mins/60)
+if(hrs<24)return{dot:'#555555',label:`Last seen ${hrs}h ago`}
+return{dot:'#555555',label:`Last seen ${Math.floor(hrs/24)}d ago`}
+}
+
 if(!user)return null
+const status=getOnlineStatus()
+
 return(
 <Modal visible={visible} animationType="slide" presentationStyle={Platform.OS==='ios'?'pageSheet':'fullScreen'} onRequestClose={onClose}>
 <View style={s.container}>
@@ -87,6 +82,10 @@ return(
 <Text style={s.name}>{user.display_name}</Text>
 {user.title?<Text style={s.title}>{user.title}</Text>:null}
 <Text style={s.meta}>@{user.username} · {user.age}{user.location?' · '+user.location:''}</Text>
+<View style={s.onlineRow}>
+<View style={[s.onlineDot,{backgroundColor:status.dot}]}/>
+<Text style={[s.onlineLabel,{color:status.dot==='#00E676'?'#00E676':status.dot==='#FFD600'?'#FFD600':'rgba(255,255,255,0.5)'}]}>{status.label}</Text>
+</View>
 </View>
 <TouchableOpacity style={s.chatBtn} onPress={()=>onChat(user.id,user)}>
 <Text style={s.chatBtnText}>💬 Send Message</Text>
@@ -105,7 +104,7 @@ return(
 )}
 {user.preferences&&user.preferences.length>0&&(
 <View style={s.card}>
-<Text style={s.infoLabel}>PREFERENCES</Text>
+<Text style={s.infoLabel}>INTERESTS</Text>
 <View style={s.prefTags}>
 {user.preferences.map(p=>(
 <View key={p} style={s.prefTag}><Text style={s.prefTagText}>{p}</Text></View>
@@ -116,9 +115,10 @@ return(
 </ScrollView>
 </View>
 <Modal visible={!!zoomPhoto} transparent animationType="fade">
-<GestureHandlerRootView style={{flex:1}}>
-<ZoomableImage uri={zoomPhoto||''} onClose={()=>setZoomPhoto(null)}/>
-</GestureHandlerRootView>
+<TouchableOpacity style={{flex:1,backgroundColor:'rgba(0,0,0,0.95)',alignItems:'center',justifyContent:'center'}} onPress={()=>setZoomPhoto(null)}>
+<Image source={{uri:zoomPhoto||''}} style={{width:'95%',height:'70%',resizeMode:'contain'}}/>
+<Text style={{color:'rgba(255,255,255,0.5)',marginTop:20,fontSize:14}}>Tap to close</Text>
+</TouchableOpacity>
 </Modal>
 </Modal>
 )
@@ -145,7 +145,10 @@ lockedText:{color:'rgba(255,255,255,0.6)',fontSize:9,textAlign:'center',marginTo
 info:{padding:20},
 name:{color:'#ffffff',fontSize:26,fontWeight:'800',marginBottom:4},
 title:{color:'#F5A623',fontSize:16,fontStyle:'italic',marginBottom:8},
-meta:{color:'rgba(255,255,255,0.6)',fontSize:14},
+meta:{color:'rgba(255,255,255,0.6)',fontSize:14,marginBottom:8},
+onlineRow:{flexDirection:'row',alignItems:'center',gap:6,marginTop:4},
+onlineDot:{width:10,height:10,borderRadius:5},
+onlineLabel:{fontSize:13,fontWeight:'600'},
 chatBtn:{backgroundColor:'#2196F3',borderRadius:16,padding:16,marginHorizontal:20,marginBottom:16,alignItems:'center'},
 chatBtnText:{color:'#ffffff',fontSize:16,fontWeight:'700'},
 card:{backgroundColor:'rgba(255,255,255,0.1)',borderRadius:16,padding:16,marginHorizontal:16,marginBottom:12,borderWidth:1,borderColor:'rgba(255,255,255,0.15)'},
