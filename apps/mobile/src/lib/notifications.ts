@@ -4,7 +4,9 @@ import{Platform}from'react-native'
 import{supabase}from'./supabase'
 
 Notifications.setNotificationHandler({
-handleNotification:async()=>({shouldShowBanner:true,shouldShowList:true,
+handleNotification:async()=>({
+shouldShowBanner:true,
+shouldShowList:true,
 shouldShowAlert:true,
 shouldPlaySound:true,
 shouldSetBadge:true,
@@ -64,8 +66,25 @@ body:JSON.stringify(message),
 })
 }
 
+async function sendPremiumNotification(toUserId:string,title:string,body:string,data?:object){
+const{data:user}=await supabase.from('users').select('push_token,is_premium').eq('id',toUserId).single()
+if(!user?.push_token||!user?.is_premium)return
+await sendPushNotification(user.push_token,title,body,data)
+}
+
+export async function notifyNewMessage(otherUserId:string,myDisplayName:string,messagePreview:string){
+const{data:otherUser}=await supabase.from('users').select('push_token').eq('id',otherUserId).single()
+if(!otherUser?.push_token)return
+await sendPushNotification(
+otherUser.push_token,
+`💬 ${myDisplayName}`,
+messagePreview,
+{type:'message'}
+)
+}
+
 export async function notifyNewMatch(otherUserId:string,myDisplayName:string){
-const{data:otherUser}=await supabase.from('users').select('push_token,display_name').eq('id',otherUserId).single()
+const{data:otherUser}=await supabase.from('users').select('push_token').eq('id',otherUserId).single()
 if(!otherUser?.push_token)return
 await sendPushNotification(
 otherUser.push_token,
@@ -75,13 +94,58 @@ otherUser.push_token,
 )
 }
 
-export async function notifyNewMessage(otherUserId:string,myDisplayName:string,messagePreview:string){
-const{data:otherUser}=await supabase.from('users').select('push_token').eq('id',otherUserId).single()
-if(!otherUser?.push_token)return
+export async function notifyProfileLiked(toUserId:string,fromDisplayName:string){
+await sendPremiumNotification(
+toUserId,
+'❤️ Someone liked you!',
+`${fromDisplayName} liked your profile`,
+{type:'like'}
+)
+}
+
+export async function notifyProfileViewed(toUserId:string,fromDisplayName:string){
+await sendPremiumNotification(
+toUserId,
+'👁️ Someone viewed your profile',
+`${fromDisplayName} checked out your profile`,
+{type:'view'}
+)
+}
+
+export async function notifyProfileSaved(toUserId:string,fromDisplayName:string){
+await sendPremiumNotification(
+toUserId,
+'⭐ Someone saved your profile!',
+`${fromDisplayName} added you to their favorites`,
+{type:'favorite'}
+)
+}
+
+export async function notifyAlbumRequest(toUserId:string,fromDisplayName:string){
+await sendPremiumNotification(
+toUserId,
+'🔒 Private Album Request',
+`${fromDisplayName} wants to see your private album`,
+{type:'album_request'}
+)
+}
+
+export async function notifyAlbumAccepted(toUserId:string,fromDisplayName:string){
+await sendPremiumNotification(
+toUserId,
+'🔓 Album Access Granted!',
+`${fromDisplayName} shared their private album with you`,
+{type:'album_accepted'}
+)
+}
+
+export async function notifyNewMembers(toUserId:string,count:number){
+const{data:user}=await supabase.from('users').select('push_token').eq('id',toUserId).single()
+if(!user?.push_token)return
 await sendPushNotification(
-otherUser.push_token,
-`${myDisplayName}`,
-messagePreview,
-{type:'message'}
+user.push_token,
+'🆕 New members joined!',
+`${count} new people joined Syde Vibe today. Go check them out!`,
+{type:'new_members'}
 )
 }

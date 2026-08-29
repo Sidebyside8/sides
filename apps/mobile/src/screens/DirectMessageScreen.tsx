@@ -3,7 +3,7 @@ import{View,Text,TextInput,TouchableOpacity,StyleSheet,FlatList,KeyboardAvoiding
 import{supabase}from'../lib/supabase'
 import ProfileModal from'../components/ProfileModal'
 import{launchImageLibraryAsync,launchCameraAsync,requestMediaLibraryPermissionsAsync,requestCameraPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
-import{notifyNewMessage}from'../lib/notifications'
+import{notifyNewMessage,notifyAlbumRequest,notifyAlbumAccepted}from'../lib/notifications'
 import{checkPremiumStatus}from'../lib/subscription'
 type Message={id:string;sender_id:string;recipient_id:string;content:string;created_at:string;read_at?:string;image_url?:string;is_disappearing?:boolean;disappears_at?:string;deleted_for_sender?:boolean;deleted_for_recipient?:boolean;message_type?:string}
 type OtherUser={id:string;display_name:string;username:string;avatar_url?:string}
@@ -106,7 +106,7 @@ const{data,error}=await supabase.from('direct_messages').insert({
 sender_id:currentUserId,recipient_id:otherUser.id,content:'📷 Photo',image_url:ud.publicUrl,is_disappearing:disappearingMode,disappears_at:disappearsAt
 }).select().single()
 if(!error&&data)setMessages(prev=>[...prev,data])
-flatListRef.current?.scrollToEnd({animated:true})
+flatListRef.current?.scrollToEnd({animated:true});try{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:myProf}=await supabase.from('users').select('display_name').eq('id',user.id).single();if(myProf)notifyAlbumRequest(otherUser.id,myProf.display_name).catch(()=>{})}}catch(e){}
 }catch(e:any){Alert.alert('Error',e.message)}
 setUploadingImage(false)
 }
@@ -143,7 +143,7 @@ await notifyNewMessage(otherUser.id,myProfile?.display_name||'Someone',content)
 }catch(e){}
 }
 setSending(false)
-flatListRef.current?.scrollToEnd({animated:true})
+flatListRef.current?.scrollToEnd({animated:true});try{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:myProf}=await supabase.from('users').select('display_name').eq('id',user.id).single();if(myProf)notifyAlbumRequest(otherUser.id,myProf.display_name).catch(()=>{})}}catch(e){}
 }
 const handleSharePrivateAlbum=async()=>{
 if(privatePhotos.length===0){Alert.alert('No Photos','Add photos to your private album in your Profile first.');return}
@@ -154,7 +154,7 @@ const{data,error}=await supabase.from('direct_messages').insert({
 sender_id:currentUserId,recipient_id:otherUser.id,content:'🔒 __ALBUM_SHARE_REQUEST__',message_type:'album_request'
 }).select().single()
 if(!error&&data)setMessages(prev=>[...prev,data])
-flatListRef.current?.scrollToEnd({animated:true})
+flatListRef.current?.scrollToEnd({animated:true});try{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:myProf}=await supabase.from('users').select('display_name').eq('id',user.id).single();if(myProf)notifyAlbumRequest(otherUser.id,myProf.display_name).catch(()=>{})}}catch(e){}
 }
 const handleAcceptAlbum=async(senderId:string)=>{
 const{data:{user}}=await supabase.auth.getUser()

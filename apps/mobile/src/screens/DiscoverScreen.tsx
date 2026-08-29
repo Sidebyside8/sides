@@ -5,6 +5,7 @@ import{supabase}from'../lib/supabase'
 import SydeHeader from'../components/SydeHeader'
 import ProfileModal from'../components/ProfileModal'
 import FavoritesScreen from'./FavoritesScreen'
+import{notifyProfileLiked,notifyProfileSaved,notifyProfileViewed}from'../lib/notifications'
 import SearchScreen from'./SearchScreen'
 import WhoLikedMeScreen from'./WhoLikedMeScreen'
 
@@ -166,7 +167,7 @@ setLikesUsedToday(c=>Math.max(0,c-1))
 }else{
 const{error}=await supabase.from('likes').insert({liker_id:currentUserId,liked_id:likedId})
 if(!error){
-setLikedIds(prev=>new Set([...prev,likedId]))
+setLikedIds(prev=>new Set([...prev,likedId]));try{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:myProf}=await supabase.from('users').select('display_name').eq('id',user.id).single();if(myProf)notifyProfileLiked(likedId,myProf.display_name).catch(()=>{})}}catch(e){}
 if(!isPremiumUser)setLikesUsedToday(c=>c+1)
 }
 }
@@ -189,7 +190,7 @@ if(isFav){
 await supabase.from('favorites').delete().eq('user_id',currentUserId).eq('favorited_id',favId)
 setFavorites(prev=>{const n=new Set(prev);n.delete(favId);return n})
 }else{
-await supabase.from('favorites').insert({user_id:currentUserId,favorited_id:favId})
+await supabase.from('favorites').insert({user_id:currentUserId,favorited_id:favId});try{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:myProf}=await supabase.from('users').select('display_name').eq('id',user.id).single();if(myProf)await notifyProfileSaved(favId,myProf.display_name)}}catch(e){}
 setFavorites(prev=>new Set([...prev,favId]))
 }
 }
