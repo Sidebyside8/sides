@@ -6,7 +6,7 @@ import SydeHeader from'../components/SydeHeader'
 import BlockedUsersScreen from'./BlockedUsersScreen'
 import PhotosManager from'../components/PhotosManager'
 
-const PREFERENCES=['Kissing and making out','Cuddling and physical affection','Mutual masturbation','Oral sex (giving and/or receiving)','Frottage (body-to-body rubbing or grinding)','Nipple play','Erotic massage','Sensual touching and caressing','Hand jobs','Sexting or sharing fantasies','Using sex toys','Role-play and erotic play','Showering or bathing together','Intimate companionship and emotional connection']
+const PREFERENCES=['Dating','Friendship','Relationships','Casual Dating','Long-term Relationship','Networking','Activity Partner','Travel Buddy','Gym Partner','Hiking & Outdoors','Coffee & Conversation','Dining Out','Movies & TV','Music & Concerts','Arts & Culture','Gaming','Sports & Fitness','Yoga & Wellness','Cooking & Food','Reading & Books','Dogs & Pets','Nightlife & Bars','Community & Activism','Career & Professional']
 const PRONOUNS=['He/Him','She/Her','They/Them','He/They','She/They','Any/All','Ask Me']
 
 type Profile={id:string;username:string;display_name:string;title?:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[];is_album_locked?:boolean;pronouns?:string}
