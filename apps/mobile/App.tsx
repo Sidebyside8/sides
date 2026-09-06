@@ -5,7 +5,7 @@ import { Session } from '@supabase/supabase-js'
 import { supabase } from './src/lib/supabase'
 import { GRADIENT, COLORS } from './src/lib/theme'
 import { registerForPushNotifications, savePushToken } from './src/lib/notifications'
-import { setupPurchases } from './src/lib/subscription'
+import { setupPurchases, checkPremiumStatus } from './src/lib/subscription'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import LoginScreen from './src/screens/LoginScreen'
 import ProfileSetupScreen from './src/screens/ProfileSetupScreen'
@@ -62,6 +62,11 @@ export default function App() {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
           setSession(session)
+          // Re-check premium status every time app comes to foreground
+          try {
+            const premium = await checkPremiumStatus()
+            setIsPremium(premium)
+          } catch (e) {}
         }
       }
     })
@@ -75,13 +80,28 @@ export default function App() {
   const checkProfile = async (userId: string) => {
     if (profileChecked.current === userId) return
     profileChecked.current = userId
-    setupPurchases()
     try {
+      // Setup RevenueCat first
+      await setupPurchases()
+
       const { data } = await supabase.from('users').select('id,is_premium').eq('id', userId).maybeSingle()
       const hasP = !!data
       setHasProfile(hasP)
+
       if (hasP) {
-        setIsPremium(data?.is_premium || false)
+        // Always verify premium with RevenueCat — source of truth
+        try {
+          const rcPremium = await checkPremiumStatus()
+          setIsPremium(rcPremium)
+          // If RevenueCat says not premium but DB says premium, fix DB
+          if (!rcPremium && data?.is_premium) {
+            await supabase.from('users').update({ is_premium: false }).eq('id', userId)
+          }
+        } catch (e) {
+          // Fallback to DB if RevenueCat fails
+          setIsPremium(data?.is_premium || false)
+        }
+
         registerForPushNotifications().then(token => { if (token) savePushToken(token) })
         supabase.from('users').update({ is_online: true, last_seen: new Date().toISOString() }).eq('id', userId).then(() => {})
 
