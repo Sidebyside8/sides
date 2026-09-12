@@ -14,6 +14,11 @@ const[currentUserId,setCurrentUserId]=useState<string|null>(null)
 const[sending,setSending]=useState(false)
 const[uploadingImage,setUploadingImage]=useState(false)
 const[showOtherProfile,setShowOtherProfile]=useState(false)
+const[showEmojiPicker,setShowEmojiPicker]=useState(false)
+const[showGifPicker,setShowGifPicker]=useState(false)
+const[gifSearch,setGifSearch]=useState('')
+const[gifs,setGifs]=useState<any[]>([])
+const[loadingGifs,setLoadingGifs]=useState(false)
 const[isPremium,setIsPremium]=useState(false)
 const[disappearingMode,setDisappearingMode]=useState(false)
 const[viewingDisappearing,setViewingDisappearing]=useState<Message|null>(null)
@@ -173,6 +178,25 @@ const{data}=await supabase.from('private_photos').select('*').eq('user_id',other
 setOtherAlbumPhotos(data||[])
 setShowOtherAlbum(true)
 }
+const searchGifs=async(query:string)=>{
+setLoadingGifs(true)
+try{
+const res=await fetch('https://api.giphy.com/v1/gifs/search?api_key=sXpGFDGZs0Dv1mmNFvYaGUvYwKX0PWIh&q='+encodeURIComponent(query||'trending')+'&limit=20&rating=pg-13')
+const data=await res.json()
+setGifs(data.data||[])
+}catch(e){console.log('GIF error',e)}
+setLoadingGifs(false)
+}
+
+const sendGif=async(gifUrl:string)=>{
+setShowGifPicker(false)
+if(!currentUserId)return
+const{data,error}=await supabase.from('direct_messages').insert({
+sender_id:currentUserId,recipient_id:otherUser.id,content:'🎬 GIF',image_url:gifUrl
+}).select().single()
+if(!error&&data){setMessages(prev=>[...prev,data]);flatListRef.current?.scrollToEnd({animated:true})}
+}
+
 const handleDeleteChat=async()=>{
 if(!currentUserId)return
 if(!isPremium){
@@ -278,6 +302,12 @@ onContentSizeChange={()=>flatListRef.current?.scrollToEnd({animated:false})}
 ListEmptyComponent={<View style={s.empty}><Text style={s.emptyText}>No messages yet{'\n'}Say hello! 👋</Text></View>}
 renderItem={renderMessage}/>
 <View style={s.inputRow}>
+<TouchableOpacity style={s.emojiBtn} onPress={()=>{setShowEmojiPicker(!showEmojiPicker);setShowGifPicker(false)}}>
+<Text style={{fontSize:18}}>😊</Text>
+</TouchableOpacity>
+<TouchableOpacity style={s.emojiBtn} onPress={()=>{setShowGifPicker(!showGifPicker);setShowEmojiPicker(false);searchGifs('trending')}}>
+<Text style={{fontSize:18}}>🎬</Text>
+</TouchableOpacity>
 {isPremium&&(
 <TouchableOpacity style={[s.disappearBtn,disappearingMode&&s.disappearBtnActive]} onPress={()=>setDisappearingMode(!disappearingMode)}>
 <Text style={{fontSize:16}}>🔥</Text>
@@ -298,6 +328,44 @@ onPress={handleSend} disabled={!newMessage.trim()||sending}>
 </TouchableOpacity>
 </View>
 <ProfileModal user={otherUser as any} visible={showOtherProfile} onClose={()=>setShowOtherProfile(false)} onChat={()=>{}} isFavorite={false} onToggleFavorite={()=>{}} onBlock={()=>{}}/>
+{showEmojiPicker&&(
+<View style={{backgroundColor:'#0A2A4A',borderTopWidth:1,borderTopColor:'rgba(255,255,255,0.1)',padding:12}}>
+<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+{['😀','😂','😍','🥰','😘','😎','🔥','❤️','💕','👍','🙌','😊','🤩','😏','💪','🎉','✨','🌈','🏳️‍🌈','💋','😋','🤗','😜','🥳','💯','👀','💬','🫶','😮','🤭'].map(emoji=>(
+<TouchableOpacity key={emoji} onPress={()=>{setNewMessage(prev=>prev+emoji);setShowEmojiPicker(false)}} style={{padding:8}}>
+<Text style={{fontSize:28}}>{emoji}</Text>
+</TouchableOpacity>
+))}
+</ScrollView>
+</View>
+)}
+{showGifPicker&&(
+<View style={{backgroundColor:'#0A2A4A',borderTopWidth:1,borderTopColor:'rgba(255,255,255,0.1)',maxHeight:280}}>
+<View style={{flexDirection:'row',padding:8,gap:8}}>
+<TextInput
+style={{flex:1,backgroundColor:'rgba(255,255,255,0.15)',borderRadius:20,paddingHorizontal:14,paddingVertical:8,color:'#ffffff',fontSize:14}}
+placeholder="Search GIFs..."
+placeholderTextColor="rgba(255,255,255,0.4)"
+value={gifSearch}
+onChangeText={setGifSearch}
+onSubmitEditing={()=>searchGifs(gifSearch)}
+returnKeyType="search"
+/>
+<TouchableOpacity onPress={()=>setShowGifPicker(false)} style={{padding:8}}>
+<Text style={{color:'rgba(255,255,255,0.6)',fontSize:16}}>✕</Text>
+</TouchableOpacity>
+</View>
+{loadingGifs
+?<View style={{padding:20,alignItems:'center'}}><ActivityIndicator color="#ffffff"/></View>
+:<ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{padding:8,gap:8}}>
+{gifs.map((gif:any)=>(
+<TouchableOpacity key={gif.id} onPress={()=>sendGif(gif.images.fixed_height.url)}>
+<Image source={{uri:gif.images.fixed_height.url}} style={{width:120,height:120,borderRadius:8}}/>
+</TouchableOpacity>
+))}
+</ScrollView>}
+</View>
+)}
 <Modal visible={!!viewingDisappearing} transparent animationType="fade">
 <View style={{flex:1,backgroundColor:'rgba(0,0,0,0.9)',alignItems:'center',justifyContent:'center'}}>
 <Text style={{color:'#FF8C00',fontSize:48,fontWeight:'900',marginBottom:16}}>{disappearCountdown}s</Text>
@@ -355,6 +423,7 @@ imageBtn:{backgroundColor:'rgba(255,255,255,0.2)',borderRadius:20,width:40,heigh
 imageBtnText:{fontSize:20},
 albumBtn:{backgroundColor:'rgba(255,255,255,0.1)',borderRadius:20,width:40,height:40,alignItems:'center',justifyContent:'center',marginRight:8,borderWidth:1,borderColor:'rgba(255,255,255,0.3)'},
 disappearBtn:{backgroundColor:'rgba(255,255,255,0.1)',borderRadius:20,width:40,height:40,alignItems:'center',justifyContent:'center',marginRight:8},
+emojiBtn:{backgroundColor:'rgba(255,255,255,0.1)',borderRadius:20,width:40,height:40,alignItems:'center',justifyContent:'center',marginRight:8},
 disappearBtnActive:{backgroundColor:'rgba(255,140,0,0.5)',borderWidth:1,borderColor:'#FF8C00'},
 sendBtn:{backgroundColor:'#2196F3',borderRadius:20,paddingHorizontal:16,paddingVertical:10},
 sendDisabled:{backgroundColor:'rgba(33,150,243,0.3)'},

@@ -145,7 +145,7 @@ export default function App() {
         {activeTab === 'messages' && <MessagesListScreen onDirectMessage={(user) => setActiveDirectMessage(user)} />}
         {activeTab === 'community' && <CommunityScreen />}
         {activeTab === 'profile' && <ProfileScreen onUpgrade={() => setShowPremium(true)} isPremium={isPremium} />}
-        {activeTab === 'viewed' && <WhoViewedMeScreen onClose={() => setActiveTab('profile')} />}
+        {activeTab === 'viewed' && <WhoViewedMeScreen onClose={() => setActiveTab('profile')} onChat={(user) => setActiveDirectMessage(user)} onUpgrade={() => setShowPremium(true)} />}
       </View>
 
       {!isPremium && (
