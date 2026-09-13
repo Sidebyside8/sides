@@ -15,9 +15,10 @@ import DirectMessageScreen from './src/screens/DirectMessageScreen'
 import CommunityScreen from './src/screens/CommunityScreen'
 import ProfileScreen from './src/screens/ProfileScreen'
 import WhoViewedMeScreen from './src/screens/WhoViewedMeScreen'
+import WhoLikedMeScreen from './src/screens/WhoLikedMeScreen'
 import PremiumScreen from './src/screens/PremiumScreen'
 
-type Tab = 'discover' | 'messages' | 'community' | 'profile' | 'viewed'
+type Tab = 'discover' | 'messages' | 'community' | 'profile' | 'viewed' | 'liked'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
@@ -144,8 +145,9 @@ export default function App() {
         {activeTab === 'discover' && <DiscoverScreen key={discoverKey} onChat={(user) => setActiveDirectMessage(user)} setActiveTab={(tab: string) => setActiveTab(tab as Tab)} onUpgrade={() => setShowPremium(true)} />}
         {activeTab === 'messages' && <MessagesListScreen onDirectMessage={(user) => setActiveDirectMessage(user)} />}
         {activeTab === 'community' && <CommunityScreen />}
-        {activeTab === 'profile' && <ProfileScreen onUpgrade={() => setShowPremium(true)} isPremium={isPremium} onShowWhoLikedMe={() => setActiveTab('viewed')} onShowWhoViewed={() => setActiveTab('viewed')} />}
+        {activeTab === 'profile' && <ProfileScreen onUpgrade={() => setShowPremium(true)} isPremium={isPremium} onShowWhoLikedMe={() => setActiveTab('liked')} onShowWhoViewed={() => setActiveTab('viewed')} />}
         {activeTab === 'viewed' && <WhoViewedMeScreen onClose={() => setActiveTab('profile')} onChat={(user) => setActiveDirectMessage(user)} onUpgrade={() => setShowPremium(true)} />}
+        {activeTab === 'liked' && <WhoLikedMeScreen onClose={() => setActiveTab('profile')} whoLikedMe={[]} isPremium={isPremium} onUpgrade={() => setShowPremium(true)} onChat={(user) => setActiveDirectMessage(user)} />}
       </View>
 
       {!isPremium && (

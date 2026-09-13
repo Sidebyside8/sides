@@ -327,12 +327,26 @@ return(
 <TouchableOpacity style={s.statGridBtn} onPress={()=>onShowWhoViewed?onShowWhoViewed():null}>
 <Text style={s.statGridIcon}>👁️</Text>
 <Text style={s.statGridNumber}>{viewedMeCount}</Text>
-<Text style={s.statGridLabel}>Viewed You</Text>
+<Text style={s.statGridLabel}>Viewed Me</Text>
 </TouchableOpacity>
 <TouchableOpacity style={s.statGridBtn} onPress={()=>onUpgrade&&onUpgrade()}>
 <Text style={s.statGridIcon}>👑</Text>
 <Text style={s.statGridNumber}>$9.99</Text>
 <Text style={s.statGridLabel}>Premium</Text>
+</TouchableOpacity>
+</View>
+<View style={s.statsGrid}>
+<TouchableOpacity style={s.statGridBtn} onPress={()=>setShowBlocked(true)}>
+<Text style={s.statGridIcon}>🚫</Text>
+<Text style={s.statGridLabel}>Blocked</Text>
+</TouchableOpacity>
+<TouchableOpacity style={s.statGridBtn} onPress={handleResetPassword}>
+<Text style={s.statGridIcon}>🔑</Text>
+<Text style={s.statGridLabel}>Password</Text>
+</TouchableOpacity>
+<TouchableOpacity style={[s.statGridBtn,{borderColor:'rgba(255,0,0,0.3)'}]} onPress={handleDeleteAccount}>
+<Text style={s.statGridIcon}>🗑️</Text>
+<Text style={[s.statGridLabel,{color:'#ff4444'}]}>Delete</Text>
 </TouchableOpacity>
 </View>
 <TouchableOpacity style={s.blockedButton} onPress={()=>setShowBlocked(true)}>
