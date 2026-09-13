@@ -82,7 +82,7 @@ export default function LoginScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor="rgba(10,22,40,0.4)"
+                placeholderTextColor="#888888"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
@@ -92,7 +92,7 @@ export default function LoginScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Password"
-                placeholderTextColor="rgba(10,22,40,0.4)"
+                placeholderTextColor="#888888"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
@@ -123,7 +123,7 @@ export default function LoginScreen() {
                 <TextInput
                   style={styles.dobInput}
                   placeholder="MM/DD/YYYY"
-                  placeholderTextColor="rgba(10,22,40,0.4)"
+                  placeholderTextColor="#888888"
                   value={dob}
                   onChangeText={setDob}
                   keyboardType={Platform.OS === "ios" ? "numbers-and-punctuation" : "default"}

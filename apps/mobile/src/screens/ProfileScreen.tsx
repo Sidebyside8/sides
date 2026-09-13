@@ -11,7 +11,7 @@ const PRONOUNS=['He/Him','She/Her','They/Them','He/They','She/They','Any/All','A
 
 type Profile={id:string;username:string;display_name:string;title?:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[];is_album_locked?:boolean;pronouns?:string}
 
-export default function ProfileScreen({onUpgrade,isPremium}:{onUpgrade?:()=>void;isPremium?:boolean}){
+export default function ProfileScreen({onUpgrade,isPremium,onShowWhoLikedMe}:{onUpgrade?:()=>void;isPremium?:boolean;onShowWhoLikedMe?:()=>void}){
 const[profile,setProfile]=useState<Profile|null>(null)
 const[loading,setLoading]=useState(true)
 const[editing,setEditing]=useState(false)
@@ -23,6 +23,7 @@ const[privatePhotos,setPrivatePhotos]=useState<{id:string;photo_url:string}[]>([
 const[uploadingPrivate,setUploadingPrivate]=useState(false)
 const[isAlbumLocked,setIsAlbumLocked]=useState(true)
 const[zoomPhoto,setZoomPhoto]=useState<string|null>(null)
+const[whoLikedMeCount,setWhoLikedMeCount]=useState(0)
 const maxPrivatePhotos=isPremium?6:3
 
 useEffect(()=>{loadProfile();loadPrivatePhotos()},[])
@@ -32,6 +33,8 @@ const{data:{user}}=await supabase.auth.getUser()
 if(!user)return
 const{data}=await supabase.from('users').select('*').eq('id',user.id).single()
 if(data){setProfile(data);setEditData(data);setIsAlbumLocked(data.is_album_locked!==false)}
+// Load who liked me count
+supabase.from('likes').select('id',{count:'exact'}).eq('liked_id',user.id).then(({count})=>setWhoLikedMeCount(count||0))
 setLoading(false)
 }
 
@@ -184,6 +187,19 @@ await supabase.auth.signOut()
 ])
 }
 
+const handleResetPassword=async()=>{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user?.email)return
+Alert.alert('Reset Password','We will send a password reset link to '+user.email+'.',[
+{text:'Cancel',style:'cancel'},
+{text:'Send Reset Link',onPress:async()=>{
+const{error}=await supabase.auth.resetPasswordForEmail(user.email||'')
+if(error)Alert.alert('Error',error.message)
+else Alert.alert('Email Sent','Check your email for a password reset link.')
+}}
+])
+}
+
 const handleSignOut=async()=>{
 Alert.alert('Sign Out','Are you sure?',[
 {text:'Cancel',style:'cancel'},
@@ -300,11 +316,17 @@ return(
 {!isPremium&&<TouchableOpacity style={s.premiumButton} onPress={onUpgrade}>
 <Text style={s.premiumButtonText}>👑 Upgrade to Premium — $9.99/mo</Text>
 </TouchableOpacity>}
+<TouchableOpacity style={s.whoLikedButton} onPress={()=>onShowWhoLikedMe?onShowWhoLikedMe():onUpgrade&&onUpgrade()}>
+<Text style={s.whoLikedText}>❤️ Who Liked You {whoLikedMeCount>0?'('+whoLikedMeCount+')':''}</Text>
+</TouchableOpacity>
 <TouchableOpacity style={s.blockedButton} onPress={()=>setShowBlocked(true)}>
 <Text style={s.blockedButtonText}>🚫 Manage Blocked Users</Text>
 </TouchableOpacity>
 <TouchableOpacity style={s.deleteAccountButton} onPress={handleDeleteAccount}>
 <Text style={s.deleteAccountText}>🗑️ Delete Account</Text>
+</TouchableOpacity>
+<TouchableOpacity style={s.resetPasswordButton} onPress={handleResetPassword}>
+<Text style={s.resetPasswordText}>🔑 Reset Password</Text>
 </TouchableOpacity>
 <TouchableOpacity style={s.signOutButton} onPress={handleSignOut}>
 <Text style={s.signOutText}>Sign Out</Text>
@@ -368,10 +390,14 @@ cancelButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:1
 cancelButtonText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
 premiumButton:{backgroundColor:'#F5A623',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12},
 premiumButtonText:{color:'#0A1628',fontSize:16,fontWeight:'700'},
+whoLikedButton:{backgroundColor:'rgba(255,100,100,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(255,100,100,0.4)'},
+whoLikedText:{color:'#ff6b6b',fontSize:16,fontWeight:'600'},
 blockedButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(0,0,0,0.15)'},
 blockedButtonText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
 deleteAccountButton:{backgroundColor:'rgba(255,0,0,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(255,0,0,0.4)'},
 deleteAccountText:{color:'#ff4444',fontSize:16,fontWeight:'600'},
+resetPasswordButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(255,255,255,0.3)'},
+resetPasswordText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
 signOutButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,borderWidth:1,borderColor:'#FF6B00'},
 signOutText:{color:'#FF8C00',fontSize:16,fontWeight:'600'},
 loading:{flex:1,backgroundColor:'transparent',alignItems:'center',justifyContent:'center'},

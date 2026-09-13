@@ -154,7 +154,8 @@ return{...u,_dist:R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
 }
 return{...u,_dist:9999}
 })
-const nearbyFiltered=filter==='nearby'?withDist.filter((u:any)=>u._dist<=200):withDist
+const onlineFiltered=showOnlineOnly?withDist.filter((u:any)=>u.is_online):withDist
+const nearbyFiltered=filter==='nearby'?onlineFiltered.filter((u:any)=>u._dist<=200):onlineFiltered
 nearbyFiltered.sort((a:any,b:any)=>{
 if(b.is_premium!==a.is_premium)return(b.is_premium?1:0)-(a.is_premium?1:0)
 return a._dist-b._dist
@@ -386,8 +387,8 @@ handleViewProfile(u)
 <TouchableOpacity style={[s.filterTab,isIncognito&&s.incognitoActive]} onPress={handleToggleIncognito}>
 <Text style={[s.filterText,isIncognito&&s.filterTextActive]}>🕶️ Incognito</Text>
 </TouchableOpacity>
-<TouchableOpacity style={[s.filterTab,showWhoLikedMe&&s.likesActive]} onPress={()=>setShowWhoLikedMe(!showWhoLikedMe)}>
-<Text style={[s.filterText,showWhoLikedMe&&s.filterTextActive]}>❤️ {whoLikedMe.length>0?whoLikedMe.length:''}</Text>
+<TouchableOpacity style={[s.filterTab,showOnlineOnly&&s.onlineActive]} onPress={()=>setShowOnlineOnly(!showOnlineOnly)}>
+<Text style={[s.filterText,showOnlineOnly&&s.filterTextActive]}>🟢 Online</Text>
 </TouchableOpacity>
 </View>
 
@@ -572,6 +573,7 @@ filterTab:{flex:1,paddingVertical:8,alignItems:'center',borderRadius:10},
 filterTabActive:{backgroundColor:'#2196F3'},
 incognitoActive:{backgroundColor:'#5E35B1'},
 likesActive:{backgroundColor:'rgba(255,100,100,0.5)'},
+onlineActive:{backgroundColor:'rgba(0,230,118,0.3)'},
 filterText:{fontSize:12,color:'rgba(255,255,255,0.7)',fontWeight:'500'},
 filterTextActive:{color:'#ffffff',fontWeight:'700'},
 banner:{marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(241,90,34,0.2)',borderRadius:10,padding:12,borderWidth:1,borderColor:'rgba(255,140,0,0.4)'},
