@@ -55,6 +55,9 @@ const[myProfile,setMyProfile]=useState<User|null>(null)
 const[showMyProfile,setShowMyProfile]=useState(false)
 const[promoIndex,setPromoIndex]=useState(0)
 const[showViewLimit,setShowViewLimit]=useState(false)
+const[showTravelMode,setShowTravelMode]=useState(false)
+const[travelCity,setTravelCity]=useState<string|null>(null)
+const[showOnlineOnly,setShowOnlineOnly]=useState(false)
 
 useEffect(()=>{loadUsers()},[filter])
 useEffect(()=>{
