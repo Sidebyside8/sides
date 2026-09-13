@@ -144,7 +144,7 @@ export default function App() {
         {activeTab === 'discover' && <DiscoverScreen key={discoverKey} onChat={(user) => setActiveDirectMessage(user)} setActiveTab={(tab: string) => setActiveTab(tab as Tab)} onUpgrade={() => setShowPremium(true)} />}
         {activeTab === 'messages' && <MessagesListScreen onDirectMessage={(user) => setActiveDirectMessage(user)} />}
         {activeTab === 'community' && <CommunityScreen />}
-        {activeTab === 'profile' && <ProfileScreen onUpgrade={() => setShowPremium(true)} isPremium={isPremium} onShowWhoLikedMe={() => setActiveTab('viewed')} />}
+        {activeTab === 'profile' && <ProfileScreen onUpgrade={() => setShowPremium(true)} isPremium={isPremium} onShowWhoLikedMe={() => setActiveTab('viewed')} onShowWhoViewed={() => setActiveTab('viewed')} />}
         {activeTab === 'viewed' && <WhoViewedMeScreen onClose={() => setActiveTab('profile')} onChat={(user) => setActiveDirectMessage(user)} onUpgrade={() => setShowPremium(true)} />}
       </View>
 

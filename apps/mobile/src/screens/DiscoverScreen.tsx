@@ -61,6 +61,12 @@ const[showOnlineOnly,setShowOnlineOnly]=useState(false)
 
 useEffect(()=>{loadUsers()},[filter])
 useEffect(()=>{
+if(users.length>0){
+const onlineF=showOnlineOnly?users.filter((u:any)=>u.is_online):users
+setFilteredUsers(onlineF)
+}
+},[showOnlineOnly])
+useEffect(()=>{
 const t=setInterval(()=>setPromoIndex(i=>(i+1)%AFFILIATE_PROMOS.length),5000)
 return()=>clearInterval(t)
 },[])
@@ -307,6 +313,9 @@ leftAction={
 }
 rightAction={
 <View style={{flexDirection:'row',alignItems:'center',gap:8}}>
+{isPremiumUser&&<TouchableOpacity onPress={()=>setShowTravelMode(true)} style={{width:36,height:36,borderRadius:18,backgroundColor:travelCity?'rgba(33,150,243,0.5)':'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
+<Text style={{fontSize:18}}>✈️</Text>
+</TouchableOpacity>}
 <TouchableOpacity onPress={()=>setShowSearch(true)} style={{width:36,height:36,borderRadius:18,backgroundColor:'rgba(255,255,255,0.2)',alignItems:'center',justifyContent:'center'}}>
 <Text style={{fontSize:18}}>🔍</Text>
 </TouchableOpacity>

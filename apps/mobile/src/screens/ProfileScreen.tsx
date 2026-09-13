@@ -11,7 +11,7 @@ const PRONOUNS=['He/Him','She/Her','They/Them','He/They','She/They','Any/All','A
 
 type Profile={id:string;username:string;display_name:string;title?:string;bio:string;age:number;avatar_url?:string;location?:string;looking_for?:string;relationship_type?:string;preferences?:string[];is_album_locked?:boolean;pronouns?:string}
 
-export default function ProfileScreen({onUpgrade,isPremium,onShowWhoLikedMe}:{onUpgrade?:()=>void;isPremium?:boolean;onShowWhoLikedMe?:()=>void}){
+export default function ProfileScreen({onUpgrade,isPremium,onShowWhoLikedMe,onShowWhoViewed}:{onUpgrade?:()=>void;isPremium?:boolean;onShowWhoLikedMe?:()=>void;onShowWhoViewed?:()=>void}){
 const[profile,setProfile]=useState<Profile|null>(null)
 const[loading,setLoading]=useState(true)
 const[editing,setEditing]=useState(false)
@@ -24,6 +24,7 @@ const[uploadingPrivate,setUploadingPrivate]=useState(false)
 const[isAlbumLocked,setIsAlbumLocked]=useState(true)
 const[zoomPhoto,setZoomPhoto]=useState<string|null>(null)
 const[whoLikedMeCount,setWhoLikedMeCount]=useState(0)
+const[viewedMeCount,setViewedMeCount]=useState(0)
 const maxPrivatePhotos=isPremium?6:3
 
 useEffect(()=>{loadProfile();loadPrivatePhotos()},[])
@@ -35,6 +36,7 @@ const{data}=await supabase.from('users').select('*').eq('id',user.id).single()
 if(data){setProfile(data);setEditData(data);setIsAlbumLocked(data.is_album_locked!==false)}
 // Load who liked me count
 supabase.from('likes').select('id',{count:'exact'}).eq('liked_id',user.id).then(({count})=>setWhoLikedMeCount(count||0))
+supabase.from('profile_views').select('id',{count:'exact'}).eq('viewed_id',user.id).then(({count})=>setViewedMeCount(count||0))
 setLoading(false)
 }
 
@@ -316,9 +318,23 @@ return(
 {!isPremium&&<TouchableOpacity style={s.premiumButton} onPress={onUpgrade}>
 <Text style={s.premiumButtonText}>👑 Upgrade to Premium — $9.99/mo</Text>
 </TouchableOpacity>}
-<TouchableOpacity style={s.whoLikedButton} onPress={()=>onShowWhoLikedMe?onShowWhoLikedMe():onUpgrade&&onUpgrade()}>
-<Text style={s.whoLikedText}>❤️ Who Liked You {whoLikedMeCount>0?'('+whoLikedMeCount+')':''}</Text>
+<View style={s.statsGrid}>
+<TouchableOpacity style={s.statGridBtn} onPress={()=>onShowWhoLikedMe?onShowWhoLikedMe():onUpgrade&&onUpgrade()}>
+<Text style={s.statGridIcon}>❤️</Text>
+<Text style={s.statGridNumber}>{whoLikedMeCount}</Text>
+<Text style={s.statGridLabel}>Liked You</Text>
 </TouchableOpacity>
+<TouchableOpacity style={s.statGridBtn} onPress={()=>onShowWhoViewed?onShowWhoViewed():null}>
+<Text style={s.statGridIcon}>👁️</Text>
+<Text style={s.statGridNumber}>{viewedMeCount}</Text>
+<Text style={s.statGridLabel}>Viewed You</Text>
+</TouchableOpacity>
+<TouchableOpacity style={s.statGridBtn} onPress={()=>onUpgrade&&onUpgrade()}>
+<Text style={s.statGridIcon}>👑</Text>
+<Text style={s.statGridNumber}>$9.99</Text>
+<Text style={s.statGridLabel}>Premium</Text>
+</TouchableOpacity>
+</View>
 <TouchableOpacity style={s.blockedButton} onPress={()=>setShowBlocked(true)}>
 <Text style={s.blockedButtonText}>🚫 Manage Blocked Users</Text>
 </TouchableOpacity>
@@ -390,8 +406,11 @@ cancelButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:1
 cancelButtonText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
 premiumButton:{backgroundColor:'#F5A623',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12},
 premiumButtonText:{color:'#0A1628',fontSize:16,fontWeight:'700'},
-whoLikedButton:{backgroundColor:'rgba(255,100,100,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(255,100,100,0.4)'},
-whoLikedText:{color:'#ff6b6b',fontSize:16,fontWeight:'600'},
+statsGrid:{flexDirection:'row',marginHorizontal:24,marginBottom:12,gap:8},
+statGridBtn:{flex:1,backgroundColor:'rgba(255,255,255,0.1)',borderRadius:16,padding:16,alignItems:'center',borderWidth:1,borderColor:'rgba(255,255,255,0.2)'},
+statGridIcon:{fontSize:24,marginBottom:4},
+statGridNumber:{color:'#ffffff',fontSize:20,fontWeight:'800'},
+statGridLabel:{color:'rgba(255,255,255,0.6)',fontSize:11,marginTop:2},
 blockedButton:{backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(0,0,0,0.15)'},
 blockedButtonText:{color:'rgba(255,255,255,0.7)',fontSize:16,fontWeight:'600'},
 deleteAccountButton:{backgroundColor:'rgba(255,0,0,0.15)',borderRadius:12,padding:16,alignItems:'center',marginHorizontal:24,marginBottom:12,borderWidth:1,borderColor:'rgba(255,0,0,0.4)'},
