@@ -62,10 +62,10 @@ const[showOnlineOnly,setShowOnlineOnly]=useState(false)
 useEffect(()=>{loadUsers()},[filter])
 useEffect(()=>{
 if(users.length>0){
-const onlineF=showOnlineOnly?users.filter((u:any)=>u.is_online):users
-setFilteredUsers(onlineF)
+const base=showOnlineOnly?users.filter((u:any)=>u.is_online):users
+setFilteredUsers(base)
 }
-},[showOnlineOnly])
+},[showOnlineOnly,users])
 useEffect(()=>{
 const t=setInterval(()=>setPromoIndex(i=>(i+1)%AFFILIATE_PROMOS.length),5000)
 return()=>clearInterval(t)
