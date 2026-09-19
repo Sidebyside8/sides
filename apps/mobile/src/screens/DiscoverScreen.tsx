@@ -12,8 +12,8 @@ import WhoLikedMeScreen from'./WhoLikedMeScreen'
 const{width}=Dimensions.get('window')
 const CARD_SIZE=(width-48)/3
 const NEW_CARD_SIZE=100
-const LIKE_LIMIT=10
-const VIEW_LIMIT=10
+const LIKE_LIMIT=50
+const VIEW_LIMIT=50
 const FREE_NEW_MEMBERS=5
 
 type User={id:string;username:string;display_name:string;title?:string;bio?:string;age:number;avatar_url?:string;location?:string;preferences?:string[];looking_for?:string;relationship_type?:string;is_online?:boolean;latitude?:number;longitude?:number;is_premium?:boolean;created_at?:string}
