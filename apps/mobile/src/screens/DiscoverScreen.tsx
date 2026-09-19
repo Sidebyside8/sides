@@ -5,7 +5,7 @@ import{supabase}from'../lib/supabase'
 import SydeHeader from'../components/SydeHeader'
 import ProfileModal from'../components/ProfileModal'
 import FavoritesScreen from'./FavoritesScreen'
-import{notifyProfileLiked,notifyProfileSaved,notifyProfileViewed}from'../lib/notifications'
+import{notifyProfileLiked,notifyProfileSaved,notifyProfileViewed,notifyNewMatch}from'../lib/notifications'
 import SearchScreen from'./SearchScreen'
 import WhoLikedMeScreen from'./WhoLikedMeScreen'
 
@@ -204,7 +204,22 @@ setLikesUsedToday(c=>Math.max(0,c-1))
 }else{
 const{error}=await supabase.from('likes').insert({liker_id:currentUserId,liked_id:likedId})
 if(!error){
-setLikedIds(prev=>new Set([...prev,likedId]));try{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:myProf}=await supabase.from('users').select('display_name').eq('id',user.id).single();if(myProf)notifyProfileLiked(likedId,myProf.display_name).catch(()=>{})}}catch(e){}
+setLikedIds(prev=>new Set([...prev,likedId]));try{const{data:{user}}=await supabase.auth.getUser();if(user){const{data:myProf}=await supabase.from('users').select('display_name').eq('id',user.id).single();if(myProf){
+notifyProfileLiked(likedId,myProf.display_name).catch(()=>{})
+// Check for mutual match
+const{data:mutualLike}=await supabase.from('likes').select('id').eq('liker_id',likedId).eq('liked_id',user.id).maybeSingle()
+if(mutualLike){
+// It's a match! Notify both users
+notifyNewMatch(likedId,myProf.display_name).catch(()=>{})
+Alert.alert('Its a Match!','You and this person liked each other! Say hello!',[
+{text:'Send Message',onPress:()=>{
+const matchedUser=users.find((u:any)=>u.id===likedId)
+if(matchedUser)onChat(matchedUser)
+}},
+{text:'Later',style:'cancel'}
+])
+}
+}}}catch(e){}
 if(!isPremiumUser)setLikesUsedToday(c=>c+1)
 }
 }

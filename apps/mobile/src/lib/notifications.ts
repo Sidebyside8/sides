@@ -149,3 +149,23 @@ user.push_token,
 {type:'new_members'}
 )
 }
+
+export async function scheduleDailyReminder(){
+try{
+await Notifications.cancelAllScheduledNotificationsAsync()
+const tomorrow=new Date()
+tomorrow.setDate(tomorrow.getDate()+1)
+tomorrow.setHours(18+Math.floor(Math.random()*2),Math.floor(Math.random()*60),0,0)
+const messages=[
+{title:'Someone is checking you out!',body:'Log in to see who viewed your profile today.'},
+{title:'New likes waiting for you!',body:'Someone liked your profile. Come see who!'},
+{title:'Your community is active!',body:'New members joined Syde Vibe today. Go say hello!'},
+{title:'Do not miss your connections!',body:'Check in to see who is online near you.'},
+]
+const msg=messages[Math.floor(Math.random()*messages.length)]
+await Notifications.scheduleNotificationAsync({
+content:{title:msg.title,body:msg.body,sound:true},
+trigger:{type:Notifications.SchedulableTriggerInputTypes.DATE,date:tomorrow}
+})
+}catch(e){console.log('scheduleDailyReminder error:',e)}
+}

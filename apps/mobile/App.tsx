@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { Session } from '@supabase/supabase-js'
 import { supabase } from './src/lib/supabase'
 import { GRADIENT, COLORS } from './src/lib/theme'
-import { registerForPushNotifications, savePushToken } from './src/lib/notifications'
+import { registerForPushNotifications, savePushToken, scheduleDailyReminder } from './src/lib/notifications'
 import { setupPurchases, checkPremiumStatus } from './src/lib/subscription'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import LoginScreen from './src/screens/LoginScreen'
@@ -103,7 +103,7 @@ export default function App() {
           setIsPremium(data?.is_premium || false)
         }
 
-        registerForPushNotifications().then(token => { if (token) savePushToken(token) })
+        registerForPushNotifications().then(token => { if (token) { savePushToken(token); scheduleDailyReminder() } })
         supabase.from('users').update({ is_online: true, last_seen: new Date().toISOString() }).eq('id', userId).then(() => {})
 
         const loadUnread = () => {
