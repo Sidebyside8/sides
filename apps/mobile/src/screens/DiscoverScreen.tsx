@@ -150,7 +150,7 @@ const blurred=newFiltered.slice(FREE_NEW_MEMBERS).map((u:any)=>({...u,isBlurred:
 setNewUsers([...visible,...blurred])
 }
 
-const{data,error}=await supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium').neq('id',user.id).eq('is_active',true).limit(99)
+const{data,error}=await supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium,boosted_until').neq('id',user.id).eq('is_active',true).limit(99)
 if(error){Alert.alert('Error',error.message)}else{
 const filtered=(data||[]).filter((u:User)=>!blockedIds.includes(u.id))
 const withDist=filtered.map((u:User)=>{
@@ -166,6 +166,9 @@ return{...u,_dist:9999}
 const onlineFiltered=showOnlineOnly?withDist.filter((u:any)=>u.is_online):withDist
 const nearbyFiltered=filter==='nearby'?onlineFiltered.filter((u:any)=>u._dist<=200):onlineFiltered
 nearbyFiltered.sort((a:any,b:any)=>{
+const aBoost=a.boosted_until&&new Date(a.boosted_until)>new Date()?1:0
+const bBoost=b.boosted_until&&new Date(b.boosted_until)>new Date()?1:0
+if(bBoost!==aBoost)return bBoost-aBoost
 if(b.is_premium!==a.is_premium)return(b.is_premium?1:0)-(a.is_premium?1:0)
 return a._dist-b._dist
 })
@@ -488,6 +491,7 @@ return(
 {!isLocked&&favorites.has(item.id)&&<View style={s.favBadge}><Text style={s.favBadgeText}>⭐</Text></View>}
 {!isLocked&&item.is_online&&<View style={s.onlineDot}/>}
 {!isLocked&&item.is_premium&&<View style={s.premiumBadge}><Text style={s.premiumBadgeText}>💎</Text></View>}
+{!isLocked&&(item as any).boosted_until&&new Date((item as any).boosted_until)>new Date()&&<View style={s.boostBadge}><Text style={{fontSize:10}}>⚡</Text></View>}
 {!isLocked&&likedIds.has(item.id)&&<View style={s.likedBadge}><Text style={{fontSize:10}}>❤️</Text></View>}
 {!isLocked&&(()=>{const d=getDistance(item as any);return d?<View style={s.distBadge}><Text style={s.distText}>{d}</Text></View>:null})()}
 </View>
@@ -625,6 +629,7 @@ distBadge:{position:'absolute',bottom:4,left:4,backgroundColor:'rgba(0,0,0,0.65)
 distText:{color:'#ffffff',fontSize:9,fontWeight:'700'},
 onlineDot:{position:'absolute',top:6,left:6,width:10,height:10,borderRadius:5,backgroundColor:'#00E676',borderWidth:1.5,borderColor:'#ffffff'},
 premiumBadge:{position:'absolute',bottom:4,right:4,backgroundColor:'rgba(245,166,35,0.9)',borderRadius:8,paddingHorizontal:4,paddingVertical:1},
+boostBadge:{position:'absolute',top:4,right:4,backgroundColor:'rgba(245,166,35,0.9)',borderRadius:8,paddingHorizontal:4,paddingVertical:1},
 premiumBadgeText:{fontSize:10},
 cardAge:{color:'rgba(255,255,255,0.6)',fontSize:9,textAlign:'center',width:CARD_SIZE},
 })

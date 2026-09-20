@@ -1,6 +1,7 @@
 import{useEffect,useState}from'react'
 import{View,Text,TouchableOpacity,StyleSheet,ScrollView,Alert,Image,TextInput,Modal}from'react-native'
 import{supabase}from'../lib/supabase'
+import{checkPremiumStatus,purchaseBoost,activateBoost,getBoostStatus}from'../lib/subscription'
 import{launchImageLibraryAsync,launchCameraAsync,requestMediaLibraryPermissionsAsync,requestCameraPermissionsAsync,MediaTypeOptions}from'expo-image-picker'
 import SydeHeader from'../components/SydeHeader'
 import BlockedUsersScreen from'./BlockedUsersScreen'
@@ -25,6 +26,9 @@ const[isAlbumLocked,setIsAlbumLocked]=useState(true)
 const[zoomPhoto,setZoomPhoto]=useState<string|null>(null)
 const[whoLikedMeCount,setWhoLikedMeCount]=useState(0)
 const[viewedMeCount,setViewedMeCount]=useState(0)
+const[isBoosted,setIsBoosted]=useState(false)
+const[boostingNow,setBoostingNow]=useState(false)
+const[boostedUntil,setBoostedUntil]=useState<string|null>(null)
 const maxPrivatePhotos=isPremium?6:3
 
 useEffect(()=>{loadProfile();loadPrivatePhotos()},[])
@@ -37,6 +41,7 @@ if(data){setProfile(data);setEditData(data);setIsAlbumLocked(data.is_album_locke
 // Load who liked me count
 supabase.from('likes').select('id',{count:'exact'}).eq('liked_id',user.id).then(({count})=>setWhoLikedMeCount(count||0))
 supabase.from('profile_views').select('id',{count:'exact'}).eq('viewed_id',user.id).then(({count})=>setViewedMeCount(count||0))
+getBoostStatus(user.id).then(({isBoosted,boostedUntil})=>{setIsBoosted(isBoosted);setBoostedUntil(boostedUntil)})
 setLoading(false)
 }
 
@@ -189,6 +194,40 @@ await supabase.auth.signOut()
 ])
 }
 
+const handleBoost=async()=>{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+if(isBoosted){
+const timeLeft=boostedUntil?Math.ceil((new Date(boostedUntil).getTime()-Date.now())/1000/60/60):0
+Alert.alert('Already Boosted!','Your profile is currently boosted for another '+timeLeft+' hours.')
+return
+}
+Alert.alert('Boost Your Profile','Get seen by more people! Your profile will appear at the top of Discover for 24 hours.',[
+{text:'Cancel',style:'cancel'},
+{text:isPremium?'Use Free Boost':'Buy 3 Boosts — $2.99',onPress:async()=>{
+setBoostingNow(true)
+try{
+let success=false
+if(isPremium){
+success=await activateBoost(user.id)
+}else{
+const purchased=await purchaseBoost()
+if(purchased)success=await activateBoost(user.id)
+}
+if(success){
+setIsBoosted(true)
+Alert.alert('Profile Boosted!','Your profile is now at the top of Discover for 24 hours!')
+}else{
+Alert.alert('Error','Could not activate boost. Please try again.')
+}
+}catch(e){
+Alert.alert('Error','Something went wrong. Please try again.')
+}
+setBoostingNow(false)
+}}
+])
+}
+
 const handleResetPassword=async()=>{
 const{data:{user}}=await supabase.auth.getUser()
 if(!user?.email)return
@@ -329,10 +368,10 @@ return(
 <Text style={s.statGridNumber}>{viewedMeCount}</Text>
 <Text style={s.statGridLabel}>Viewed Me</Text>
 </TouchableOpacity>
-<TouchableOpacity style={s.statGridBtn} onPress={()=>onUpgrade&&onUpgrade()}>
-<Text style={s.statGridIcon}>👑</Text>
-<Text style={s.statGridNumber}>$9.99</Text>
-<Text style={s.statGridLabel}>Premium</Text>
+<TouchableOpacity style={[s.statGridBtn,isBoosted&&{borderColor:'#F5A623',backgroundColor:'rgba(245,166,35,0.15)'}]} onPress={handleBoost} disabled={boostingNow}>
+<Text style={s.statGridIcon}>⚡</Text>
+<Text style={s.statGridNumber}>{isBoosted?'ON':'OFF'}</Text>
+<Text style={[s.statGridLabel,isBoosted&&{color:'#F5A623'}]}>{boostingNow?'Boosting...':'Boost'}</Text>
 </TouchableOpacity>
 </View>
 <View style={s.statsGrid}>

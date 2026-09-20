@@ -77,3 +77,42 @@ export async function checkPremiumStatus(): Promise<boolean> {
     return data?.is_premium || false
   }
 }
+
+export const BOOST_PRODUCT_ID = 'com.sidebyside8.syde.boost.3pack'
+
+export async function purchaseBoost(): Promise<boolean> {
+  try {
+    const offerings = await Purchases.getOfferings()
+    // Try to find boost product directly
+    const products = await Purchases.getProducts([BOOST_PRODUCT_ID])
+    if (!products || products.length === 0) return false
+    const { customerInfo } = await Purchases.purchaseStoreProduct(products[0])
+    return true
+  } catch (e: any) {
+    if (!e.userCancelled) console.log('purchaseBoost error:', e)
+    return false
+  }
+}
+
+export async function activateBoost(userId: string): Promise<boolean> {
+  try {
+    const boostedUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    const { error } = await supabase.from('users').update({ boosted_until: boostedUntil }).eq('id', userId)
+    return !error
+  } catch (e) {
+    console.log('activateBoost error:', e)
+    return false
+  }
+}
+
+export async function getBoostStatus(userId: string): Promise<{ isBoosted: boolean; boostedUntil: string | null }> {
+  try {
+    const { data } = await supabase.from('users').select('boosted_until').eq('id', userId).single()
+    if (!data?.boosted_until) return { isBoosted: false, boostedUntil: null }
+    const boostedUntil = new Date(data.boosted_until)
+    const isBoosted = boostedUntil > new Date()
+    return { isBoosted, boostedUntil: data.boosted_until }
+  } catch (e) {
+    return { isBoosted: false, boostedUntil: null }
+  }
+}
