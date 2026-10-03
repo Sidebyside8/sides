@@ -303,23 +303,6 @@ ListEmptyComponent={<View style={s.empty}><Text style={s.emptyText}>No messages 
 renderItem={renderMessage}/>
 <View style={s.inputContainer}>
 <View style={s.inputRow}>
-<TouchableOpacity style={s.emojiBtn} onPress={()=>{setShowEmojiPicker(!showEmojiPicker);setShowGifPicker(false)}}>
-<Text style={{fontSize:18}}>😊</Text>
-</TouchableOpacity>
-<TouchableOpacity style={s.emojiBtn} onPress={()=>{setShowGifPicker(!showGifPicker);setShowEmojiPicker(false);searchGifs('trending')}}>
-<Text style={{fontSize:18}}>🎬</Text>
-</TouchableOpacity>
-{isPremium&&(
-<TouchableOpacity style={[s.disappearBtn,disappearingMode&&s.disappearBtnActive]} onPress={()=>setDisappearingMode(!disappearingMode)}>
-<Text style={{fontSize:16}}>🔥</Text>
-</TouchableOpacity>
-)}
-<TouchableOpacity style={s.imageBtn} onPress={handleSendImage} disabled={uploadingImage}>
-{uploadingImage?<ActivityIndicator color="#ffffff" size="small"/>:<Text style={s.imageBtnText}>📷</Text>}
-</TouchableOpacity>
-<TouchableOpacity style={s.albumBtn} onPress={handleSharePrivateAlbum}>
-<Text style={{fontSize:16}}>🔒</Text>
-</TouchableOpacity>
 <TextInput style={s.input} placeholder={disappearingMode?'Disappearing message...':'Message...'} placeholderTextColor="rgba(10,22,40,0.4)"
 value={newMessage} onChangeText={setNewMessage} multiline
 returnKeyType="send" onSubmitEditing={handleSend}/>

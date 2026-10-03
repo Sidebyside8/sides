@@ -505,7 +505,7 @@ columnWrapperStyle={s.row}
 
 renderItem={({item,index})=>{
 const isLocked=!isPremiumUser&&index>=VIEW_LIMIT
-const showBoostBannerHere=index===VIEW_LIMIT
+const showBoostBannerHere=index===30
 return(<>
 <TouchableOpacity style={s.card} onPress={()=>isLocked?setShowViewLimit(true):handleViewProfile(item)}>
 <View style={s.cardInner}>
