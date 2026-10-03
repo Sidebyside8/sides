@@ -301,6 +301,7 @@ contentContainerStyle={s.messagesList}
 onContentSizeChange={()=>flatListRef.current?.scrollToEnd({animated:false})}
 ListEmptyComponent={<View style={s.empty}><Text style={s.emptyText}>No messages yet{'\n'}Say hello! 👋</Text></View>}
 renderItem={renderMessage}/>
+<View style={s.inputContainer}>
 <View style={s.inputRow}>
 <TouchableOpacity style={s.emojiBtn} onPress={()=>{setShowEmojiPicker(!showEmojiPicker);setShowGifPicker(false)}}>
 <Text style={{fontSize:18}}>😊</Text>
@@ -326,6 +327,26 @@ returnKeyType="send" onSubmitEditing={handleSend}/>
 onPress={handleSend} disabled={!newMessage.trim()||sending}>
 <Text style={s.sendText}>Send</Text>
 </TouchableOpacity>
+</View>
+<View style={s.iconRow}>
+<TouchableOpacity style={s.emojiBtn} onPress={()=>{setShowEmojiPicker(!showEmojiPicker);setShowGifPicker(false)}}>
+<Text style={{fontSize:20}}>😊</Text>
+</TouchableOpacity>
+<TouchableOpacity style={s.emojiBtn} onPress={()=>{setShowGifPicker(!showGifPicker);setShowEmojiPicker(false);searchGifs('trending')}}>
+<Text style={{fontSize:20}}>🎬</Text>
+</TouchableOpacity>
+{isPremium&&(
+<TouchableOpacity style={[s.emojiBtn,disappearingMode&&s.disappearBtnActive]} onPress={()=>setDisappearingMode(!disappearingMode)}>
+<Text style={{fontSize:20}}>🔥</Text>
+</TouchableOpacity>
+)}
+<TouchableOpacity style={s.emojiBtn} onPress={handleSendImage} disabled={uploadingImage}>
+{uploadingImage?<ActivityIndicator color="#ffffff" size="small"/>:<Text style={{fontSize:20}}>📷</Text>}
+</TouchableOpacity>
+<TouchableOpacity style={s.emojiBtn} onPress={handleSharePrivateAlbum}>
+<Text style={{fontSize:20}}>🔒</Text>
+</TouchableOpacity>
+</View>
 </View>
 <ProfileModal user={otherUser as any} visible={showOtherProfile} onClose={()=>setShowOtherProfile(false)} onChat={()=>{}} isFavorite={false} onToggleFavorite={()=>{}} onBlock={()=>{}}/>
 {showEmojiPicker&&(

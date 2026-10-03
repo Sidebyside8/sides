@@ -502,21 +502,11 @@ keyExtractor={i=>i.id}
 numColumns={3}
 contentContainerStyle={s.grid}
 columnWrapperStyle={s.row}
-ListFooterComponent={
-<TouchableOpacity style={s.boostBanner} onPress={()=>setShowBoostModal(true)}>
-<Text style={s.boostBannerIcon}>⚡</Text>
-<View style={{flex:1}}>
-<Text style={s.boostBannerTitle}>{isBoosted?'Profile Boosted!':'Boost Now'}</Text>
-<Text style={s.boostBannerSub}>{isBoosted?'You are at the top of Discover':'Appear at the top of everyones feed'}</Text>
-</View>
-<View style={[s.boostBannerBtn,isBoosted&&{backgroundColor:'rgba(0,230,118,0.3)'}]}>
-<Text style={s.boostBannerBtnText}>{isBoosted?'Active ✓':'⚡ Boost'}</Text>
-</View>
-</TouchableOpacity>
-}
+
 renderItem={({item,index})=>{
 const isLocked=!isPremiumUser&&index>=VIEW_LIMIT
-return(
+const showBoostBannerHere=index===VIEW_LIMIT
+return(<>
 <TouchableOpacity style={s.card} onPress={()=>isLocked?setShowViewLimit(true):handleViewProfile(item)}>
 <View style={s.cardInner}>
 {item.avatar_url?(
@@ -538,7 +528,19 @@ return(
 <Text style={{fontSize:12}}>{likedIds.has(item.id)?'❤️':'🤍'}</Text>
 </TouchableOpacity>}
 </TouchableOpacity>
-)
+{showBoostBannerHere&&(
+<TouchableOpacity style={[s.boostBanner,{width:'100%'}]} onPress={()=>setShowBoostModal(true)}>
+<Text style={s.boostBannerIcon}>⚡</Text>
+<View style={{flex:1}}>
+<Text style={s.boostBannerTitle}>{isBoosted?'Profile Boosted!':'Boost Now'}</Text>
+<Text style={s.boostBannerSub}>{isBoosted?'You are at the top of Discover':'Appear at the top of everyones feed'}</Text>
+</View>
+<View style={[s.boostBannerBtn,isBoosted&&{backgroundColor:'rgba(0,230,118,0.3)'}]}>
+<Text style={s.boostBannerBtnText}>{isBoosted?'Active':'Boost'}</Text>
+</View>
+</TouchableOpacity>
+)}
+</>)
 }}
 />}
 
