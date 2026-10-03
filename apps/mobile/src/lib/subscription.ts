@@ -4,7 +4,7 @@ import { supabase } from './supabase'
 
 export const PREMIUM_PRODUCT_ID = 'com.sidebyside8.syde.premium.monthly'
 const API_KEY_IOS = 'appl_bsTgWJKXgiNSMfokFEqLKCsuXtn'
-const API_KEY_ANDROID = 'appl_bsTgWJKXgiNSMfokFEqLKCsuXtn'
+const API_KEY_ANDROID = 'goog_kDajgDWgGKJTPnWJkjuRAmJaIkm'
 
 export async function setupPurchases() {
   try {

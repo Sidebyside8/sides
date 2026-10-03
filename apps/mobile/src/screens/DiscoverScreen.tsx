@@ -2,6 +2,7 @@ import{useEffect,useState}from'react'
 import*as Location from'expo-location'
 import{View,Text,TouchableOpacity,StyleSheet,FlatList,Alert,Image,Dimensions,ScrollView,Linking,Modal}from'react-native'
 import{supabase}from'../lib/supabase'
+import{purchaseBoost,activateBoost,getBoostStatus}from'../lib/subscription'
 import SydeHeader from'../components/SydeHeader'
 import ProfileModal from'../components/ProfileModal'
 import FavoritesScreen from'./FavoritesScreen'
@@ -58,6 +59,9 @@ const[showViewLimit,setShowViewLimit]=useState(false)
 const[showTravelMode,setShowTravelMode]=useState(false)
 const[travelCity,setTravelCity]=useState<string|null>(null)
 const[showOnlineOnly,setShowOnlineOnly]=useState(false)
+const[isBoosted,setIsBoosted]=useState(false)
+const[showBoostModal,setShowBoostModal]=useState(false)
+const[boostingNow,setBoostingNow]=useState(false)
 
 useEffect(()=>{loadUsers()},[filter])
 useEffect(()=>{
@@ -95,6 +99,7 @@ setIsIncognito(!!(myProfileData as any).is_incognito)
 }
 
 const isPrem=!!myProfileData?.is_premium
+if(user)getBoostStatus(user.id).then(({isBoosted})=>setIsBoosted(isBoosted))
 
 let localCoords:{lat:number;lng:number}|null=myCoords
 try{
@@ -189,6 +194,32 @@ if(!isPremiumUser){
 setViewsUsedToday(c=>c+1)
 supabase.from('profile_views').insert({viewer_id:currentUserId,viewed_id:user.id}).then(()=>{})
 }
+}
+
+const handleBoost=async()=>{
+const{data:{user}}=await supabase.auth.getUser()
+if(!user)return
+setBoostingNow(true)
+try{
+let success=false
+if(isPremiumUser){
+success=await activateBoost(user.id)
+}else{
+const purchased=await purchaseBoost()
+if(purchased)success=await activateBoost(user.id)
+}
+if(success){
+setIsBoosted(true)
+setShowBoostModal(false)
+Alert.alert('Profile Boosted!','Your profile is now at the top of Discover for 24 hours!')
+loadUsers()
+}else{
+Alert.alert('Error','Could not activate boost. Please try again.')
+}
+}catch(e){
+Alert.alert('Error','Something went wrong. Please try again.')
+}
+setBoostingNow(false)
 }
 
 const handleLike=async(likedId:string)=>{
@@ -471,17 +502,24 @@ keyExtractor={i=>i.id}
 numColumns={3}
 contentContainerStyle={s.grid}
 columnWrapperStyle={s.row}
+ListFooterComponent={
+<TouchableOpacity style={s.boostBanner} onPress={()=>setShowBoostModal(true)}>
+<Text style={s.boostBannerIcon}>⚡</Text>
+<View style={{flex:1}}>
+<Text style={s.boostBannerTitle}>{isBoosted?'Profile Boosted!':'Boost Now'}</Text>
+<Text style={s.boostBannerSub}>{isBoosted?'You are at the top of Discover':'Appear at the top of everyones feed'}</Text>
+</View>
+<View style={[s.boostBannerBtn,isBoosted&&{backgroundColor:'rgba(0,230,118,0.3)'}]}>
+<Text style={s.boostBannerBtnText}>{isBoosted?'Active ✓':'⚡ Boost'}</Text>
+</View>
+</TouchableOpacity>
+}
 renderItem={({item,index})=>{
 const isLocked=!isPremiumUser&&index>=VIEW_LIMIT
 return(
 <TouchableOpacity style={s.card} onPress={()=>isLocked?setShowViewLimit(true):handleViewProfile(item)}>
 <View style={s.cardInner}>
-{isLocked?(
-<View style={[s.cardImage,{backgroundColor:'rgba(0,0,0,0.7)',alignItems:'center',justifyContent:'center'}]}>
-<Text style={{fontSize:28}}>🔒</Text>
-<Text style={{color:'rgba(255,255,255,0.7)',fontSize:9,marginTop:4,textAlign:'center'}}>Upgrade</Text>
-</View>
-):item.avatar_url?(
+{item.avatar_url?(
 <Image source={{uri:item.avatar_url}} style={s.cardImage}/>
 ):(
 <View style={s.cardPlaceholder}>
@@ -495,9 +533,7 @@ return(
 {!isLocked&&likedIds.has(item.id)&&<View style={s.likedBadge}><Text style={{fontSize:10}}>❤️</Text></View>}
 {!isLocked&&(()=>{const d=getDistance(item as any);return d?<View style={s.distBadge}><Text style={s.distText}>{d}</Text></View>:null})()}
 </View>
-{isLocked
-?<Text style={[s.cardTitle,{color:'#F5A623'}]}>👑 Premium</Text>
-:<Text style={s.cardTitle} numberOfLines={1}>{item.title||item.display_name}</Text>}
+<Text style={s.cardTitle} numberOfLines={1}>{item.title||item.display_name}</Text>
 {!isLocked&&<TouchableOpacity style={[s.likeBtn,likedIds.has(item.id)&&s.likeBtnActive]} onPress={()=>handleLike(item.id)}>
 <Text style={{fontSize:12}}>{likedIds.has(item.id)?'❤️':'🤍'}</Text>
 </TouchableOpacity>}
@@ -521,6 +557,25 @@ return(
 </View>
 )}
 
+<Modal visible={showBoostModal} transparent animationType="fade">
+<View style={{flex:1,backgroundColor:'rgba(0,0,0,0.85)',alignItems:'center',justifyContent:'center',padding:32}}>
+<View style={{backgroundColor:'#0A2A4A',borderRadius:24,padding:28,width:'100%',borderWidth:1,borderColor:'rgba(245,166,35,0.5)'}}>
+<Text style={{fontSize:48,textAlign:'center',marginBottom:12}}>⚡</Text>
+<Text style={{color:'#ffffff',fontSize:22,fontWeight:'900',marginBottom:8,textAlign:'center'}}>Profile Boost</Text>
+<Text style={{color:'rgba(255,255,255,0.7)',fontSize:14,textAlign:'center',marginBottom:20,lineHeight:22}}>Boost your profile to the top of Discover for 24 hours. Get seen by more people and get more matches!</Text>
+<View style={{backgroundColor:'rgba(245,166,35,0.15)',borderRadius:12,padding:16,marginBottom:20,borderWidth:1,borderColor:'rgba(245,166,35,0.3)'}}>
+<Text style={{color:'#F5A623',fontSize:18,fontWeight:'900',textAlign:'center'}}>{isPremiumUser?'Free with Premium':'3 Boosts — $2.99'}</Text>
+<Text style={{color:'rgba(255,255,255,0.6)',fontSize:12,textAlign:'center',marginTop:4}}>{isPremiumUser?'1 free boost per week included':'$1.00 per boost'}</Text>
+</View>
+<TouchableOpacity style={{backgroundColor:'#F5A623',borderRadius:12,padding:16,alignItems:'center',marginBottom:12}} onPress={handleBoost} disabled={boostingNow}>
+<Text style={{color:'#0A1628',fontSize:17,fontWeight:'900'}}>{boostingNow?'Boosting...':(isPremiumUser?'Activate Free Boost':'Buy 3 Boosts — $2.99')}</Text>
+</TouchableOpacity>
+<TouchableOpacity onPress={()=>setShowBoostModal(false)} style={{padding:12,alignItems:'center'}}>
+<Text style={{color:'rgba(255,255,255,0.5)',fontSize:14}}>Maybe later</Text>
+</TouchableOpacity>
+</View>
+</View>
+</Modal>
 <Modal visible={showViewLimit} transparent animationType="fade">
 <View style={{flex:1,backgroundColor:'rgba(0,0,0,0.85)',alignItems:'center',justifyContent:'center',padding:32}}>
 <View style={{backgroundColor:'#0A2A4A',borderRadius:24,padding:28,alignItems:'center',borderWidth:1,borderColor:'rgba(245,166,35,0.5)'}}>
@@ -630,6 +685,12 @@ distText:{color:'#ffffff',fontSize:9,fontWeight:'700'},
 onlineDot:{position:'absolute',top:6,left:6,width:10,height:10,borderRadius:5,backgroundColor:'#00E676',borderWidth:1.5,borderColor:'#ffffff'},
 premiumBadge:{position:'absolute',bottom:4,right:4,backgroundColor:'rgba(245,166,35,0.9)',borderRadius:8,paddingHorizontal:4,paddingVertical:1},
 boostBadge:{position:'absolute',top:4,right:4,backgroundColor:'rgba(245,166,35,0.9)',borderRadius:8,paddingHorizontal:4,paddingVertical:1},
+boostBanner:{flexDirection:'row',alignItems:'center',backgroundColor:'rgba(245,166,35,0.15)',borderRadius:16,padding:16,marginTop:8,marginHorizontal:0,borderWidth:1,borderColor:'rgba(245,166,35,0.4)'},
+boostBannerIcon:{fontSize:28,marginRight:12},
+boostBannerTitle:{color:'#ffffff',fontSize:15,fontWeight:'800'},
+boostBannerSub:{color:'rgba(255,255,255,0.6)',fontSize:12,marginTop:2},
+boostBannerBtn:{backgroundColor:'#F5A623',borderRadius:10,paddingHorizontal:14,paddingVertical:8,marginLeft:8},
+boostBannerBtnText:{color:'#0A1628',fontSize:13,fontWeight:'800'},
 premiumBadgeText:{fontSize:10},
 cardAge:{color:'rgba(255,255,255,0.6)',fontSize:9,textAlign:'center',width:CARD_SIZE},
 })
