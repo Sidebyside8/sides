@@ -505,7 +505,6 @@ columnWrapperStyle={s.row}
 
 renderItem={({item,index})=>{
 const isLocked=!isPremiumUser&&index>=VIEW_LIMIT
-const showBoostBannerHere=index===30
 return(<>
 <TouchableOpacity style={s.card} onPress={()=>isLocked?setShowViewLimit(true):handleViewProfile(item)}>
 <View style={s.cardInner}>
@@ -528,18 +527,7 @@ return(<>
 <Text style={{fontSize:12}}>{likedIds.has(item.id)?'❤️':'🤍'}</Text>
 </TouchableOpacity>}
 </TouchableOpacity>
-{showBoostBannerHere&&(
-<TouchableOpacity style={[s.boostBanner,{width:'100%'}]} onPress={()=>setShowBoostModal(true)}>
-<Text style={s.boostBannerIcon}>⚡</Text>
-<View style={{flex:1}}>
-<Text style={s.boostBannerTitle}>{isBoosted?'Profile Boosted!':'Boost Now'}</Text>
-<Text style={s.boostBannerSub}>{isBoosted?'You are at the top of Discover':'Appear at the top of everyones feed'}</Text>
-</View>
-<View style={[s.boostBannerBtn,isBoosted&&{backgroundColor:'rgba(0,230,118,0.3)'}]}>
-<Text style={s.boostBannerBtnText}>{isBoosted?'Active':'Boost'}</Text>
-</View>
-</TouchableOpacity>
-)}
+
 </>)
 }}
 />}
@@ -688,6 +676,7 @@ onlineDot:{position:'absolute',top:6,left:6,width:10,height:10,borderRadius:5,ba
 premiumBadge:{position:'absolute',bottom:4,right:4,backgroundColor:'rgba(245,166,35,0.9)',borderRadius:8,paddingHorizontal:4,paddingVertical:1},
 boostBadge:{position:'absolute',top:4,right:4,backgroundColor:'rgba(245,166,35,0.9)',borderRadius:8,paddingHorizontal:4,paddingVertical:1},
 boostBanner:{flexDirection:'row',alignItems:'center',backgroundColor:'rgba(245,166,35,0.15)',borderRadius:16,padding:16,marginTop:8,marginHorizontal:0,borderWidth:1,borderColor:'rgba(245,166,35,0.4)'},
+boostBannerFull:{flexDirection:'row',alignItems:'center',marginHorizontal:16,marginBottom:10,backgroundColor:'rgba(245,166,35,0.15)',borderRadius:12,padding:12,borderWidth:1,borderColor:'rgba(245,166,35,0.4)'},
 boostBannerIcon:{fontSize:28,marginRight:12},
 boostBannerTitle:{color:'#ffffff',fontSize:15,fontWeight:'800'},
 boostBannerSub:{color:'rgba(255,255,255,0.6)',fontSize:12,marginTop:2},
