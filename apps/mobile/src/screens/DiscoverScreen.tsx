@@ -151,9 +151,9 @@ const newFiltered=(newData||[]).filter((u:any)=>!blockedIds.includes(u.id))
 if(isPrem){
 setNewUsers(newFiltered)
 }else{
-const visible=newFiltered.slice(0,FREE_NEW_MEMBERS)
-const blurred=newFiltered.slice(FREE_NEW_MEMBERS).map((u:any)=>({...u,isBlurred:true,avatar_url:undefined,display_name:'???'}))
-setNewUsers([...visible,...blurred])
+// Show all members with photos, but mark after 10 as premium only
+const newWithAccess=newFiltered.map((u:any,i:number)=>i>=10?{...u,isPremiumOnly:true}:u)
+setNewUsers(newWithAccess)
 }
 
 const{data,error}=await supabase.from('users').select('id,username,display_name,title,bio,age,avatar_url,location,preferences,looking_for,relationship_type,latitude,longitude,is_online,is_premium,boosted_until').neq('id',user.id).eq('is_active',true).limit(99)
@@ -382,16 +382,7 @@ rightAction={
 }
 />
 
-<TouchableOpacity style={s.boostBannerFull} onPress={()=>setShowBoostModal(true)}>
-<Text style={s.boostBannerIcon}>⚡</Text>
-<View style={{flex:1}}>
-<Text style={s.boostBannerTitle}>{isBoosted?'Profile Boosted!':'Boost Now'}</Text>
-<Text style={s.boostBannerSub}>{isBoosted?'You are at the top of Discover':'Appear at the top of everyones feed'}</Text>
-</View>
-<View style={[s.boostBannerBtn,isBoosted&&{backgroundColor:'rgba(0,230,118,0.3)'}]}>
-<Text style={s.boostBannerBtnText}>{isBoosted?'Active':'⚡ Boost'}</Text>
-</View>
-</TouchableOpacity>
+
 <TouchableOpacity style={[s.affiliateBanner,promo.url==='BOOST'&&{borderColor:'rgba(245,166,35,0.6)',backgroundColor:'rgba(245,166,35,0.15)'}]} onPress={()=>promo.url==='BOOST'?setShowBoostModal(true):Linking.openURL(promo.url)}>
 <View style={{flex:1}}>
 <Text style={s.affiliateLabel}>{promo.label}</Text>
@@ -411,7 +402,7 @@ rightAction={
 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{paddingHorizontal:16,gap:10}}>
 {newUsers.map((u,idx)=>(
 <TouchableOpacity key={u.id+idx} style={s.newCard} onPress={()=>{
-if((u as any).isBlurred){onUpgrade&&onUpgrade();return}
+if((u as any).isPremiumOnly){onUpgrade&&onUpgrade();return}
 handleViewProfile(u)
 }}>
 <View style={s.newCardInner}>
