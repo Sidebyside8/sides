@@ -23,6 +23,7 @@ const AFFILIATE_PROMOS=[
 {id:'1',label:'🌈 LGBTQ+ Travel',text:'Find queer-friendly hotels & getaways',cta:'Explore',url:'https://www.orbitz.com'},
 {id:'2',label:'💊 PrEP Made Easy',text:'Get PrEP delivered to your door',cta:'Learn More',url:'https://www.nurx.com'},
 {id:'3',label:'👕 Queer Fashion',text:'Shop LGBTQ+ owned brands',cta:'Shop Now',url:'https://www.asos.com'},
+{id:'4',label:'⚡ Boost Your Profile',text:'Appear at the top of Discover for 24 hours',cta:'Boost Now',url:'BOOST'},
 ]
 
 export default function DiscoverScreen({onChat,setActiveTab,onUpgrade}:{onChat:(user:any)=>void;setActiveTab?:(tab:string)=>void;onUpgrade?:()=>void}){
@@ -391,13 +392,13 @@ rightAction={
 <Text style={s.boostBannerBtnText}>{isBoosted?'Active':'⚡ Boost'}</Text>
 </View>
 </TouchableOpacity>
-<TouchableOpacity style={s.affiliateBanner} onPress={()=>Linking.openURL(promo.url)}>
+<TouchableOpacity style={[s.affiliateBanner,promo.url==='BOOST'&&{borderColor:'rgba(245,166,35,0.6)',backgroundColor:'rgba(245,166,35,0.15)'}]} onPress={()=>promo.url==='BOOST'?setShowBoostModal(true):Linking.openURL(promo.url)}>
 <View style={{flex:1}}>
 <Text style={s.affiliateLabel}>{promo.label}</Text>
-<Text style={s.affiliateText}>{promo.text}</Text>
+<Text style={s.affiliateText}>{isBoosted&&promo.url==='BOOST'?'Your profile is boosted and at the top!':promo.text}</Text>
 </View>
-<View style={s.affiliateCta}>
-<Text style={s.affiliateCtaText}>{promo.cta} →</Text>
+<View style={[s.affiliateCta,promo.url==='BOOST'&&{backgroundColor:'#F5A623'}]}>
+<Text style={s.affiliateCtaText}>{promo.url==='BOOST'?(isBoosted?'Active ✓':'Boost Now'):promo.cta+' →'}</Text>
 </View>
 </TouchableOpacity>
 
