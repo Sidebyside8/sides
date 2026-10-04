@@ -13,7 +13,7 @@ import WhoLikedMeScreen from'./WhoLikedMeScreen'
 const{width}=Dimensions.get('window')
 const CARD_SIZE=(width-48)/3
 const NEW_CARD_SIZE=100
-const LIKE_LIMIT=50
+const LIKE_LIMIT=10
 const VIEW_LIMIT=50
 const FREE_NEW_MEMBERS=5
 
@@ -381,6 +381,16 @@ rightAction={
 }
 />
 
+<TouchableOpacity style={s.boostBannerFull} onPress={()=>setShowBoostModal(true)}>
+<Text style={s.boostBannerIcon}>⚡</Text>
+<View style={{flex:1}}>
+<Text style={s.boostBannerTitle}>{isBoosted?'Profile Boosted!':'Boost Now'}</Text>
+<Text style={s.boostBannerSub}>{isBoosted?'You are at the top of Discover':'Appear at the top of everyones feed'}</Text>
+</View>
+<View style={[s.boostBannerBtn,isBoosted&&{backgroundColor:'rgba(0,230,118,0.3)'}]}>
+<Text style={s.boostBannerBtnText}>{isBoosted?'Active':'⚡ Boost'}</Text>
+</View>
+</TouchableOpacity>
 <TouchableOpacity style={s.affiliateBanner} onPress={()=>Linking.openURL(promo.url)}>
 <View style={{flex:1}}>
 <Text style={s.affiliateLabel}>{promo.label}</Text>
@@ -412,23 +422,28 @@ handleViewProfile(u)
 :<Text style={{color:'#fff',fontSize:22,fontWeight:'bold'}}>{u.display_name?.[0]||'?'}</Text>}
 </View>}
 {u.is_premium&&!(u as any).isBlurred&&<View style={s.newPremiumBadge}><Text style={{fontSize:8}}>💎</Text></View>}
+<View style={s.newCardNameOverlay}>
+<Text style={s.newCardNameInner} numberOfLines={1}>{(u as any).isBlurred?'👑':u.display_name}</Text>
 </View>
-<Text style={s.newCardName} numberOfLines={1}>{(u as any).isBlurred?'👑 Premium':u.display_name}</Text>
-{!(u as any).isBlurred&&<TouchableOpacity style={s.newChatBtn} onPress={()=>handleNewUserChat(u)}>
-<Text style={s.newChatBtnText}>💬</Text>
-</TouchableOpacity>}
-{(u as any).isBlurred&&<View style={[s.newChatBtn,{backgroundColor:'rgba(245,166,35,0.3)',borderColor:'#F5A623'}]}>
-<Text style={{fontSize:10,color:'#F5A623'}}>Unlock</Text>
-</View>}
+</View>
 </TouchableOpacity>
 ))}
 </ScrollView>
+<TouchableOpacity style={s.newBoostBanner} onPress={()=>setShowBoostModal(true)}>
+<Text style={{fontSize:16,marginRight:8}}>⚡</Text>
+<View style={{flex:1}}>
+<Text style={{color:'#ffffff',fontSize:13,fontWeight:'800'}}>{isBoosted?'Profile Boosted!':'Boost Now'}</Text>
+<Text style={{color:'rgba(255,255,255,0.6)',fontSize:11}}>{isBoosted?'You are at the top':'Get seen by more people'}</Text>
+</View>
+<View style={{backgroundColor:isBoosted?'rgba(0,230,118,0.3)':'#F5A623',borderRadius:8,paddingHorizontal:10,paddingVertical:5}}>
+<Text style={{color:isBoosted?'#ffffff':'#0A1628',fontSize:12,fontWeight:'800'}}>{isBoosted?'Active':'⚡ Boost'}</Text>
+</View>
+</TouchableOpacity>
 </View>
 )}
 
 {!isPremiumUser&&(
-<View style={{paddingHorizontal:16,marginBottom:4,flexDirection:'row',justifyContent:'space-between'}}>
-<Text style={{color:'rgba(255,255,255,0.5)',fontSize:11}}>👁️ {viewsUsedToday}/{VIEW_LIMIT} profiles viewed today</Text>
+<View style={{paddingHorizontal:16,marginBottom:4,flexDirection:'row',justifyContent:'flex-end'}}>
 <Text style={{color:'rgba(255,255,255,0.5)',fontSize:11}}>❤️ {likesUsedToday}/{LIKE_LIMIT} likes used today</Text>
 </View>
 )}
@@ -642,6 +657,9 @@ newCardInner:{width:NEW_CARD_SIZE,height:NEW_CARD_SIZE,borderRadius:16,overflow:
 newCardImage:{width:NEW_CARD_SIZE,height:NEW_CARD_SIZE},
 newPremiumBadge:{position:'absolute',top:4,right:4,backgroundColor:'rgba(245,166,35,0.9)',borderRadius:6,padding:2},
 newCardName:{color:'#ffffff',fontSize:10,fontWeight:'600',textAlign:'center',width:NEW_CARD_SIZE},
+newCardNameOverlay:{position:'absolute',bottom:0,left:0,right:0,backgroundColor:'rgba(0,0,0,0.5)',paddingVertical:4,paddingHorizontal:4},
+newCardNameInner:{color:'#ffffff',fontSize:9,fontWeight:'700',textAlign:'center'},
+newBoostBanner:{flexDirection:'row',alignItems:'center',marginHorizontal:16,marginTop:8,backgroundColor:'rgba(245,166,35,0.15)',borderRadius:12,padding:10,borderWidth:1,borderColor:'rgba(245,166,35,0.4)'},
 newChatBtn:{marginTop:4,backgroundColor:'rgba(33,150,243,0.4)',borderRadius:12,paddingHorizontal:10,paddingVertical:4,borderWidth:1,borderColor:'#2196F3'},
 newChatBtnText:{fontSize:12},
 filterRow:{flexDirection:'row',marginHorizontal:16,marginBottom:12,backgroundColor:'rgba(255,255,255,0.15)',borderRadius:12,padding:4},
